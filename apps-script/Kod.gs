@@ -72,7 +72,7 @@ var SEMA = [
     anahtar: 'yayin', baslik: 'Bilimsel Yayın', simge: '📄',
     aciklama: 'Makale, bildiri, kitap, kitap bölümü',
     uyari: 'Sadece bu yıl yayımlanmış/basılmış çalışmalarınızı ekleyiniz.',
-    sayfa: 'Bilimsel yayın', ilk: 12, son: 104, tarihSutun: 'N', tekrar: 'C',
+    sayfa: 'Bilimsel yayın', ilk: 12, son: 104, tarihSutun: 'N', tekrar: 'C', iceAktar: true,
     alanlar: [
       { sutun: 'B', etiket: 'Yayın Türü', tip: 'liste', zorunlu: true,
         secenekler: ['Makale', 'Sözlü (Özet) Bildiri', 'Poster', 'Tam Bildiri', 'Kitap Bölümü', 'Kitap'] },

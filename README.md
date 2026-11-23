@@ -13,12 +13,18 @@
 - Kadro listesi `Kod.gs` içindeki `KADRO` sabitindedir (kaynak: eee.ikcu.edu.tr akademik personel sayfası). Kadro değişince bu listeyi güncelleyin.
 - **Girdiğim Kayıtlar** sekmesinde öğretim üyesi kendi kayıtlarını görür.
 - Telefon ekranında da çalışır.
+- **Yayınları otomatik getirme** (Bilimsel Yayın formu):
+  - *Yayınlarımı getir*: öğretim üyesinin İKÇÜ adresli yayınlarını açık akademik veritabanı [OpenAlex](https://openalex.org)'ten seçilen yıl için getirir. Bulunamazsa ORCID ile aranabilir.
+  - *Google Scholar'dan aktar*: Scholar profilinde yayınlar seçilip **Dışa aktar → BibTeX** metni yapıştırılır. Kayıtlar mümkünse OpenAlex'le eşleştirilip DOI, dil ve atıf bilgisi eklenir.
+  - Her iki yolda da APA künye, tür, dil, yayım yeri, İKÇÜ'lü ortak yazarlar ve atıf sayısı otomatik doldurulur. Tabloda zaten olan yayınlar işaretlenir. İndeks ve Q grubu veritabanlarında bulunmadığı için listeden seçilir. Kullanıcı kontrol edip seçtiklerini tek tuşla kaydeder.
+  - Google Scholar'ın resmi API'si olmadığı ve otomatik okunması Scholar kurallarına aykırı olduğu için profil sayfası doğrudan çekilmez.
 
 ## Dosyalar
 
 | Dosya | İçerik |
 |---|---|
 | `apps-script/Kod.gs` | Sunucu kodu: sayfa şeması, kayıt, mükerrer kontrolü, menü |
+| `apps-script/Yayin.gs` | Yayın içe aktarma: OpenAlex sorgusu, Scholar BibTeX çözücü, APA künye |
 | `apps-script/Form.html` | Form arayüzü |
 
 ## Kurulum (yaklaşık 10 dakika, bir kez)
@@ -30,7 +36,7 @@
 
 2. **Betiği ekleyin.**
    E-Tabloda *Uzantılar → Apps Script*.
-   - Varsayılan `Kod.gs` dosyasının içeriğini silin, `apps-script/Kod.gs` içeriğini yapıştırın.
+   - Varsayılan `Kod.gs` dosyasının içeriğini silin, `apps-script/Kod.gs` içeriğini yapıştırın. **+ → Komut dosyası** ile `Yayin` adında bir dosya ekleyip `apps-script/Yayin.gs` içeriğini yapıştırın.
    - Sol menüde **+ → HTML** ile `Form` adında bir dosya oluşturun (uzantısız yazın, `Form.html` olur) ve `apps-script/Form.html` içeriğini yapıştırın.
    - 💾 Kaydedin.
 

@@ -25,6 +25,7 @@
     --warn: #f0c060; --warn-soft: #33290f; --err: #ff8a80; --err-soft: #3a1a18; color-scheme: dark;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
   .kap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
@@ -79,10 +80,34 @@
   .liste th, .liste td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
   .liste th { color: var(--muted); font-weight: 600; }
   .bos { color: var(--muted); }
+  .aktar { border: 1px dashed var(--accent); background: var(--accent-soft); border-radius: var(--radius); padding: 14px; margin: 14px 0 6px; }
+  .aktar h3 { margin: 0 0 4px; font-size: 15px; }
+  .aktar .satir { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .aktar .satir label { margin: 0; }
+  .aktar .satir input[type="number"] { width: 96px; }
+  .aktar ol { margin: 8px 0; padding-left: 20px; }
+  .aktar details summary { cursor: pointer; color: var(--accent); margin-top: 12px; font-weight: 600; }
+  .aktar textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; min-height: 110px; }
+  .sonuclar { display: grid; gap: 10px; margin-top: 12px; }
+  .yayin { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; }
+  .yayin.kayitli { border-color: var(--ok); }
+  .yayin input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; }
+  .yayin .kunye { font-size: 14px; overflow-wrap: anywhere; }
+  .yayin .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; overflow-wrap: anywhere; }
+  .yayin .secimler { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .yayin .secimler label { font-size: 12px; margin-bottom: 2px; }
+  .yayin .secimler select { padding: 6px 8px; font-size: 13px; }
+  .linkbtn { background: none; border: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-top: 6px; }
+  .rozet { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); margin-right: 6px; }
+  .rozet.ok { background: var(--ok-soft); color: var(--ok); }
+  .ayrac { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin-top: 16px; }
+  .ayrac::before, .ayrac::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
   @media (max-width: 640px) {
     .profil, .alanlar { grid-template-columns: 1fr; }
     .izgara { grid-template-columns: 1fr 1fr; }
     .liste .gizle-mobil { display: none; }
+    .yayin .secimler { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -141,9 +166,35 @@ function sunucu(fn, args, ok, hata) {
       ok({ durum: 'tamam', sayfa: s.sayfa, satir: satir });
     } else if (fn === 'kayitlarim') {
       ok(demoKayitlar);
+    } else if (fn === 'yayinlariGetir' || fn === 'bibtexAktar') {
+      var ad = args[1] && fn === 'bibtexAktar' ? args[1] : args[0];
+      ok({ yazarlar: [{ id: 'A0', ad: ad, yayin: 33 }], atlanan: 0, kayitlar: DEMO_YAYINLAR.map(function (k) {
+        var c = JSON.parse(JSON.stringify(k)); c.veri.E = ad; c.kaynak = fn === 'bibtexAktar' ? 'Scholar + OpenAlex' : 'OpenAlex'; return c;
+      }) });
+    } else if (fn === 'topluKaydet') {
+      var sonuclar = [], kalan = args[1].slice();
+      (function sonraki() {
+        if (!kalan.length) return ok(sonuclar);
+        sunucu('kaydet', [args[0], kalan.shift(), true], function (r) { sonuclar.push(r); sonraki(); });
+      })();
     }
   }, 500);
 }
+
+var DEMO_YAYINLAR = [
+  { baslik: 'Sim2Real-enhanced antenna characterization: a robust radiation pattern reconstruction method via passive RFID tag array',
+    doi: '10.1088/1361-6501/ae4d78', yil: 2026, mevcut: false,
+    veri: { B: 'Makale', C: 'Akdağ, İ., Göçen, C., & Kaya, A. (2026). Sim2Real-enhanced antenna characterization: a robust radiation pattern reconstruction method via passive RFID tag array. Measurement Science and Technology, 37(10), 106004. https://doi.org/10.1088/1361-6501/ae4d78',
+      D: 'İngilizce', F: 'Uluslararası', G: 'Measurement Science and Technology, 37(10), 106004.', J: 'Akdağ, İ.; Kaya, A.', M: '1' } },
+  { baslik: 'A Compact DGS-Assisted Koch-Fractal U-Slot MIMO Antenna for Sub-6 GHz 5G and WLAN Applications',
+    doi: '10.3390/telecom7040105', yil: 2026, mevcut: false,
+    veri: { B: 'Makale', C: 'Göçen, C. (2026). A Compact DGS-Assisted Koch-Fractal U-Slot MIMO Antenna for Sub-6 GHz 5G and WLAN Applications. Telecom, 7(4), 105. https://doi.org/10.3390/telecom7040105',
+      D: 'İngilizce', F: 'Uluslararası', G: 'Telecom, 7(4), 105.', J: '', M: '2' } },
+  { baslik: 'Design, Fabrication, and QPSK-Based Validation of a Compact Two-Port MIMO Antenna with Defected Ground Structure for 5 GHz WLAN Applications',
+    doi: '10.34248/bsengineering.2000932', yil: 2026, mevcut: true,
+    veri: { B: 'Makale', C: 'Göçen, C. (2026). Design, Fabrication, and QPSK-Based Validation of a Compact Two-Port MIMO Antenna with Defected Ground Structure for 5 GHz WLAN Applications. Black Sea Journal of Engineering and Science, 9(5), 2738–2748. https://doi.org/10.34248/bsengineering.2000932',
+      D: 'İngilizce', F: 'Uluslararası', G: 'Black Sea Journal of Engineering and Science, 9(5), 2738–2748.', J: '', M: '0' } }
+];
 
 // ---- Yardımcılar ----
 function $(id) { return document.getElementById(id); }
@@ -298,6 +349,10 @@ function formAc(anahtar, mesaj) {
     gonder(s, sonuc.veri, false, kaydetBtn, mesajKutu);
   });
 
+  if (s.iceAktar) {
+    p.appendChild(iceAktarPanel(s, form));
+    p.appendChild(el('div', { class: 'ayrac', text: 'veya elle girin' }));
+  }
   p.appendChild(form);
   ic.appendChild(p);
   if (mesaj) mesajKutu.appendChild(mesaj);
@@ -408,6 +463,161 @@ function gonder(s, veri, zorla, btn, mesajKutu) {
     mesajKutu.innerHTML = '';
     mesajKutu.appendChild(el('div', { class: 'mesaj hata', text: 'Kaydedilemedi: ' + hata }));
   });
+}
+
+// ---- Yayınları otomatik getirme / Scholar'dan aktarma ----
+function iceAktarPanel(s, form) {
+  var buYil = new Date().getFullYear();
+  var alan = function (c) { return s.alanlar.filter(function (a) { return a.sutun === c; })[0]; };
+  var kutu = el('div', { class: 'aktar' });
+  kutu.appendChild(el('h3', { text: '⚡ Yayınlarınızı otomatik ekleyin' }));
+  kutu.appendChild(el('div', { class: 'ipucu', text: 'İKÇÜ adresli yayınlarınız açık akademik veritabanı OpenAlex’ten ya da Google Scholar profilinizden alınır; künye APA formatında hazırlanır. Kaydetmeden önce kontrol edip seçersiniz.' }));
+
+  var yilInput = el('input', { type: 'number', id: 'aktarYil', value: buYil, min: '2000', max: String(buYil + 1) });
+  var getirBtn = el('button', { class: 'btn ana', type: 'button', text: 'Yayınlarımı getir' });
+  kutu.appendChild(el('div', { class: 'satir' }, [el('label', { for: 'aktarYil', text: 'Yıl' }), yilInput, getirBtn]));
+
+  var orcidInput = el('input', { id: 'aktarOrcid', placeholder: 'ORCID: 0000-0000-0000-0000', style: 'max-width:260px' });
+  var orcidBtn = el('button', { class: 'btn', type: 'button', text: 'ORCID ile ara' });
+  var orcidSatir = el('div', { class: 'satir', hidden: true }, [orcidInput, orcidBtn]);
+  kutu.appendChild(orcidSatir);
+
+  var bibInput = el('textarea', { id: 'aktarBib', placeholder: '@article{...' });
+  var bibBtn = el('button', { class: 'btn', type: 'button', text: 'Scholar listesini aktar' });
+  kutu.appendChild(el('details', {}, [
+    el('summary', { text: 'Google Scholar’dan aktar' }),
+    el('ol', { class: 'ipucu', html: '<li>Google Scholar profilinizi açın.</li><li>Listenin başındaki kutucukla yayınları <b>seçin</b>.</li><li><b>Dışa aktar → BibTeX</b>’e tıklayın; açılan sayfadaki metnin tamamını kopyalayın (Ctrl+A, Ctrl+C).</li><li>Aşağıya yapıştırıp “Scholar listesini aktar”a basın. Yalnızca seçtiğiniz yılın yayınları alınır.</li>' }),
+    bibInput, el('div', { class: 'satir' }, [bibBtn])
+  ]));
+
+  var mesaj = el('div', { 'aria-live': 'polite' });
+  var sonucKutu = el('div', { class: 'sonuclar' });
+  kutu.appendChild(mesaj); kutu.appendChild(sonucKutu);
+
+  function bekle(btn, metin) {
+    [getirBtn, orcidBtn, bibBtn].forEach(function (b) { b.disabled = true; });
+    var eski = btn.textContent; btn.textContent = metin;
+    return function () { [getirBtn, orcidBtn, bibBtn].forEach(function (b) { b.disabled = false; }); btn.textContent = eski; };
+  }
+  function hataGoster(h) { mesaj.innerHTML = ''; mesaj.appendChild(el('div', { class: 'mesaj hata', text: h })); }
+
+  function getir(orcid) {
+    var bitti = bekle(orcid ? orcidBtn : getirBtn, 'Aranıyor…');
+    mesaj.innerHTML = ''; sonucKutu.innerHTML = '';
+    sunucu('yayinlariGetir', [$('pAd').value.trim(), Number(yilInput.value), orcid || ''], function (r) {
+      bitti();
+      if (r.bulunamadi) {
+        orcidSatir.hidden = false;
+        mesaj.appendChild(el('div', { class: 'mesaj tekrar', text: 'Veritabanında İKÇÜ adresli “' + $('pAd').value + '” profili bulunamadı. ORCID numaranızla arayabilir ya da Google Scholar’dan aktarabilirsiniz.' }));
+        return;
+      }
+      var bilgi = r.yazarlar.map(function (y) { return y.ad + ' (' + y.yayin + ' yayın)'; }).join(', ');
+      listele(r.kayitlar, 'Bulunan profil: ' + bilgi + ' · ' + yilInput.value + ' yılında ' + r.kayitlar.length + ' yayın.');
+    }, function (h) { bitti(); hataGoster(h); });
+  }
+  getirBtn.onclick = function () { getir(''); };
+  orcidBtn.onclick = function () { getir(orcidInput.value.trim()); };
+  bibBtn.onclick = function () {
+    if (!bibInput.value.trim()) { bibInput.focus(); return; }
+    var bitti = bekle(bibBtn, 'Aktarılıyor…');
+    mesaj.innerHTML = ''; sonucKutu.innerHTML = '';
+    sunucu('bibtexAktar', [bibInput.value, $('pAd').value.trim(), Number(yilInput.value)], function (r) {
+      bitti();
+      listele(r.kayitlar, 'Scholar listesinde ' + yilInput.value + ' yılına ait ' + r.kayitlar.length + ' yayın' +
+        (r.atlanan ? ' (diğer yıllardan ' + r.atlanan + ' yayın atlandı)' : '') + '.');
+    }, function (h) { bitti(); hataGoster(h); });
+  };
+
+  function secim(etiket, c, deger, k) {
+    var id = 'y' + c + '_' + Math.random().toString(36).slice(2, 8);
+    var sel = el('select', { id: id }); secenekler(sel, alan(c).secenekler, '—');
+    sel.value = deger || '';
+    sel.onchange = function () { k.veri[c] = sel.value; };
+    return el('div', {}, [el('label', { for: id, text: etiket }), sel]);
+  }
+
+  function listele(kayitlar, bilgi) {
+    sonucKutu.innerHTML = '';
+    mesaj.innerHTML = '';
+    mesaj.appendChild(el('div', { class: 'ipucu', style: 'margin-top:10px', text: bilgi }));
+    if (!kayitlar.length) return;
+    var kutular = [];
+    var kaydetBtn = el('button', { class: 'btn ana', type: 'button' });
+    function say() {
+      var n = kutular.filter(function (x) { return x.cb.checked && !x.cb.disabled; }).length;
+      kaydetBtn.textContent = 'Seçilenleri kaydet (' + n + ')';
+      kaydetBtn.disabled = n === 0;
+    }
+    kayitlar.forEach(function (k, i) {
+      var cbId = 'ysec' + i;
+      var cb = el('input', { type: 'checkbox', id: cbId });
+      cb.checked = !k.mevcut && !k.onbaski;
+      cb.onchange = say;
+      var rozetler = el('div', { class: 'meta' });
+      if (k.mevcut) rozetler.appendChild(el('span', { class: 'rozet', text: 'Tabloda zaten var' }));
+      if (k.onbaski) rozetler.appendChild(el('span', { class: 'rozet', text: 'Ön baskı / depo kaydı' }));
+      rozetler.appendChild(document.createTextNode([k.veri.D, k.veri.M !== '' ? k.veri.M + ' atıf' : '', k.doi ? 'DOI: ' + k.doi : '', 'Kaynak: ' + k.kaynak].filter(Boolean).join(' · ')));
+      var kart = el('div', { class: 'yayin' }, [
+        cb,
+        el('div', {}, [
+          el('label', { for: cbId, class: 'kunye', style: 'font-weight:400;margin:0;cursor:pointer', text: k.veri.C }),
+          rozetler,
+          el('div', { class: 'secimler' }, [
+            secim('Türü', 'B', k.veri.B, k), secim('Yayım alanı (tahmini)', 'F', k.veri.F, k),
+            secim('İndeks', 'H', k.veri.H, k), secim('Q grubu', 'L', k.veri.L, k)
+          ]),
+          el('button', { class: 'linkbtn', type: 'button', text: 'Forma aktarıp düzenle ↓', onclick: function () { formuDoldur(form, k.veri); } })
+        ])
+      ]);
+      kutular.push({ k: k, cb: cb, kart: kart, rozetler: rozetler });
+      sonucKutu.appendChild(kart);
+    });
+    var sonucMesaj = el('div', { 'aria-live': 'polite' });
+    sonucKutu.appendChild(el('div', { class: 'ipucu', text: 'İndeks ve Q grubu veritabanında bulunmadığı için listeden seçiniz. Yayım alanı tahmindir, kontrol ediniz.' }));
+    sonucKutu.appendChild(el('div', { class: 'butonlar', style: 'margin-top:4px' }, [kaydetBtn]));
+    sonucKutu.appendChild(sonucMesaj);
+    say();
+
+    kaydetBtn.onclick = function () {
+      var secilen = kutular.filter(function (x) { return x.cb.checked && !x.cb.disabled; });
+      var liste = secilen.map(function (x) {
+        var v = {}; Object.keys(x.k.veri).forEach(function (c) { v[c] = x.k.veri[c] || ''; });
+        v.E = $('pAd').value.trim() || v.E; v.I = $('pBolum').value;
+        return v;
+      });
+      kaydetBtn.disabled = true; kaydetBtn.textContent = 'Kaydediliyor…';
+      sunucu('topluKaydet', ['yayin', liste], function (sonuclar) {
+        var basarili = 0, hatalar = [];
+        sonuclar.forEach(function (r, i) {
+          var x = secilen[i];
+          if (r.durum === 'tamam') {
+            basarili++; x.cb.disabled = true; x.kart.classList.add('kayitli');
+            x.rozetler.insertBefore(el('span', { class: 'rozet ok', text: '✓ Kaydedildi · ' + r.satir + '. satır' }), x.rozetler.firstChild);
+          } else {
+            hatalar.push((i + 1) + '. yayın: ' + (r.mesaj || 'kaydedilemedi'));
+          }
+        });
+        sonucMesaj.innerHTML = '';
+        if (basarili) sonucMesaj.appendChild(el('div', { class: 'mesaj ok', text: '✓ ' + basarili + ' yayın “Bilimsel yayın” sayfasına eklendi.' }));
+        if (hatalar.length) sonucMesaj.appendChild(el('div', { class: 'mesaj hata', text: hatalar.join(' ') }));
+        say();
+      }, function (h) {
+        say();
+        sonucMesaj.innerHTML = '';
+        sonucMesaj.appendChild(el('div', { class: 'mesaj hata', text: 'Kaydedilemedi: ' + h }));
+      });
+    };
+  }
+  return kutu;
+}
+
+function formuDoldur(form, veri) {
+  Object.keys(veri).forEach(function (c) {
+    var g = form.elements[c];
+    if (g && veri[c] !== undefined && veri[c] !== null) g.value = veri[c];
+  });
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  var ilk = form.elements.B; if (ilk) ilk.focus({ preventScroll: true });
 }
 
 // ---- Girdiğim kayıtlar ----
