@@ -24,6 +24,33 @@ var BOLUMLER = [
   'Mimarlık', 'Mühendislik Bilimleri', 'Petrol ve Doğalgaz Müh.',
   'Şehir ve Bölge Planlama', 'Yapay Zeka ve Veri Mühendisliği'
 ];
+/**
+ * Elektrik-Elektronik Mühendisliği akademik kadrosu (formda "adınızı seçin" listesi).
+ * Kaynak: https://eee.ikcu.edu.tr/Personel/Akademik/1048 (23.11.2026).
+ * Kadro değiştiğinde bu listeyi güncelleyiniz. Listede olmayanlar adını elle yazabilir.
+ */
+var KADRO = {
+  bolum: 'Elektrik Elektronik Müh.',
+  kisiler: [
+    { unvan: 'Prof. Dr.', ad: 'Adnan Kaya', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Prof. Dr.', ad: 'Merih Palandöken', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Prof. Dr.', ad: 'Savaş Şahin', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Doç. Dr.', ad: 'Kamil Çetin', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Doç. Dr.', ad: 'Mehmet Erdal Özbek', abd: 'Telekomünikasyon' },
+    { unvan: 'Doç. Dr.', ad: 'Volkan Kılıç', abd: 'Devreler ve Sistemler' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Erhan Demirok', abd: 'Elektrik Tesisleri' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Meryem Deniz', abd: 'Elektronik' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Saadet Simay Göztepe', abd: 'Telekomünikasyon' },
+    { unvan: 'Öğr. Gör. Dr.', ad: 'Ferhat Bayram', abd: 'Elektrik Makinaları' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Cem Göçen', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'İsmail Akdağ', abd: 'Devreler ve Sistemler' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Mehmet Uğur Soydemir', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Arş. Gör.', ad: 'Burcu Barış', abd: 'Telekomünikasyon' },
+    { unvan: 'Arş. Gör.', ad: 'Mehmet İhsan Hekimhan', abd: 'Elektrik Makinaları' },
+    { unvan: 'Arş. Gör.', ad: 'Onur Karadal', abd: 'Telekomünikasyon' }
+  ]
+};
+
 var ULUSAL = ['Ulusal', 'Uluslararası'];
 var EVET_HAYIR = ['Evet', 'Hayır'];
 
@@ -234,7 +261,7 @@ function baglantiGoster() {
 
 function sayfaOlustur_() {
   var t = HtmlService.createTemplateFromFile('Form');
-  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER });
+  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER, kadro: KADRO });
   return t.evaluate();
 }
 

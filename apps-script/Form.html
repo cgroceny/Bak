@@ -35,6 +35,7 @@
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
   .panel h2 { margin: 0 0 12px; font-size: 16px; }
   .profil { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .genis-profil { grid-column: 1 / -1; }
   .sekmeler { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--line); }
   .sekme { background: none; border: 0; padding: 10px 14px; font: inherit; color: var(--muted); cursor: pointer;
     border-bottom: 3px solid transparent; margin-bottom: -1px; }
@@ -96,8 +97,13 @@
   <section class="panel" aria-labelledby="profilBaslik">
     <h2 id="profilBaslik">Bilgileriniz <span class="ipucu" style="font-weight:400">(bir kez girmeniz yeterli, tarayıcınız hatırlar)</span></h2>
     <div class="profil">
-      <div><label for="pAd">Ad Soyad</label><input id="pAd" autocomplete="name" placeholder="Örn. Ayşe Yılmaz"></div>
-      <div><label for="pBolum">Bölüm / Alt Birim</label><select id="pBolum"></select></div>
+      <div class="genis-profil">
+        <label for="pKisi">Adınızı seçin</label>
+        <select id="pKisi"></select>
+        <div class="ipucu" id="pKisiBilgi">Elektrik-Elektronik Mühendisliği kadrosundaysanız listeden seçmeniz yeterli.</div>
+      </div>
+      <div id="pAdKutu"><label for="pAd">Ad Soyad</label><input id="pAd" autocomplete="name" placeholder="Örn. Ayşe Yılmaz"></div>
+      <div id="pBolumKutu"><label for="pBolum">Bölüm / Alt Birim</label><select id="pBolum"></select></div>
     </div>
   </section>
 
@@ -111,7 +117,7 @@
 
 <script>
 var VERI = <?!= semaJson ?>;
-var SEMA = VERI.sema, BOLUMLER = VERI.bolumler;
+var SEMA = VERI.sema, BOLUMLER = VERI.bolumler, KADRO = VERI.kadro;
 var DEMO = !(window.google && google.script && google.script.run);
 
 // ---- Sunucu çağrısı (demo modunda taklit edilir) ----
@@ -165,9 +171,46 @@ function secenekler(select, liste, bosMetin) {
 }
 
 // ---- Profil ----
+var DIGER = '__diger__';
 secenekler($('pBolum'), BOLUMLER);
+(function () {
+  var sel = $('pKisi');
+  sel.appendChild(el('option', { value: '', text: 'Seçiniz…' }));
+  var grup = el('optgroup', { label: 'Elektrik-Elektronik Müh. kadrosu' });
+  KADRO.kisiler.forEach(function (k, i) {
+    grup.appendChild(el('option', { value: String(i), text: k.unvan + ' ' + k.ad }));
+  });
+  sel.appendChild(grup);
+  sel.appendChild(el('option', { value: DIGER, text: 'Listede yokum / başka bölüm' }));
+})();
+function profilUygula() {
+  var v = $('pKisi').value, k = KADRO.kisiler[Number(v)];
+  var kadrodan = v !== '' && v !== DIGER && !!k;
+  $('pAdKutu').hidden = $('pBolumKutu').hidden = !(v === DIGER);
+  if (kadrodan) {
+    $('pAd').value = k.ad;
+    $('pBolum').value = KADRO.bolum;
+    $('pKisiBilgi').textContent = KADRO.bolum + ' · ' + k.abd + ' ABD';
+  } else {
+    $('pKisiBilgi').textContent = v === DIGER
+      ? 'Adınızı ve bölümünüzü aşağıya yazınız.'
+      : 'Elektrik-Elektronik Mühendisliği kadrosundaysanız listeden seçmeniz yeterli.';
+  }
+}
+$('pKisi').value = oku('kisi');
+if ($('pKisi').value !== oku('kisi')) $('pKisi').value = '';
 $('pAd').value = oku('ad');
 $('pBolum').value = oku('bolum');
+profilUygula();
+var oncekiKisi = $('pKisi').value;
+$('pKisi').addEventListener('change', function () {
+  if (this.value === DIGER && oncekiKisi !== '' && oncekiKisi !== DIGER) { $('pAd').value = ''; $('pBolum').value = ''; }
+  oncekiKisi = this.value;
+  sakla('kisi', this.value);
+  profilUygula();
+  sakla('ad', $('pAd').value.trim()); sakla('bolum', $('pBolum').value);
+  if ($('sYeni').getAttribute('aria-selected') === 'true') kategoriler(); else kayitlarim();
+});
 $('pAd').addEventListener('input', function () { sakla('ad', this.value.trim()); });
 $('pBolum').addEventListener('change', function () { sakla('bolum', this.value); });
 if (DEMO) $('demo').hidden = false;
@@ -183,7 +226,8 @@ $('sKayit').onclick = function () { sekmeSec('sKayit'); };
 // ---- Kategori ızgarası ----
 function kategoriler() {
   var ic = $('icerik'); ic.innerHTML = '';
-  var p = el('section', { class: 'panel' }, [el('h2', { text: 'Ne eklemek istiyorsunuz?' })]);
+  var p = el('section', { class: 'panel' }, [el('h2', { text: 'Ne eklemek istiyorsunuz?' }),
+    el('div', { class: 'mesaj hata', id: 'kimlikUyari', hidden: true, text: 'Önce yukarıdan adınızı seçiniz (listede yoksanız “Listede yokum” seçip adınızı ve bölümünüzü yazınız).' })]);
   var g = el('div', { class: 'izgara' });
   SEMA.forEach(function (s) {
     g.appendChild(el('button', { class: 'kart', onclick: function () { formAc(s.anahtar); } }, [
@@ -194,7 +238,20 @@ function kategoriler() {
 }
 
 // ---- Form ----
+function kimlikTamam() {
+  if ($('pKisi').value === '') { $('pKisi').focus(); return false; }
+  if ($('pKisi').value === DIGER && (!$('pAd').value.trim() || !$('pBolum').value)) {
+    ($('pAd').value.trim() ? $('pBolum') : $('pAd')).focus(); return false;
+  }
+  return true;
+}
+
 function formAc(anahtar, mesaj) {
+  if (!kimlikTamam()) {
+    var u = $('kimlikUyari');
+    if (u) u.hidden = false;
+    return;
+  }
   var s = semaBul(anahtar);
   var ic = $('icerik'); ic.innerHTML = '';
   var p = el('section', { class: 'panel' });

@@ -9,7 +9,8 @@
 - **Projeler** sayfasındaki "Yıl" sütunu ve **Patent** sayfasındaki "MMF" otomatik doldurulur.
 - Aynı başlık daha önce girildiyse **mükerrer kayıt uyarısı** verir.
 - Tablo dolarsa altına **otomatik satır ekler** (biçim ve açılır listeler kopyalanır).
-- Ad Soyad ve Bölüm bir kez girilir; tarayıcı hatırlar ve her forma otomatik gelir.
+- **Elektrik-Elektronik Müh. kadrosu** listeden adını seçer; ad ve bölüm her forma otomatik gelir. Listede olmayanlar "Listede yokum" seçip adını ve bölümünü yazar. Seçim tarayıcıda hatırlanır.
+- Kadro listesi `Kod.gs` içindeki `KADRO` sabitindedir (kaynak: eee.ikcu.edu.tr akademik personel sayfası). Kadro değişince bu listeyi güncelleyin.
 - **Girdiğim Kayıtlar** sekmesinde öğretim üyesi kendi kayıtlarını görür.
 - Telefon ekranında da çalışır.
 
@@ -40,7 +41,7 @@
 4. **Öğretim üyelerine bağlantı olarak yayınlayın.**
    Apps Script düzenleyicisinde *Dağıt → Yeni dağıtım → ⚙ → Web uygulaması*:
    - **Şu kullanıcı olarak yürüt:** *Ben*
-   - **Erişimi olanlar:** *ikc.edu.tr içindeki herkes* (önerilen. Kurumsal Google hesabı gerekir ve e-posta kaydedilir) veya *Google hesabı olan herkes*
+   - **Erişimi olanlar:** *Herkes* (girişsiz; şu anki kurulum). Alternatif: *Google hesabı olan herkes* veya Workspace hesabıyla *ikc.edu.tr içindeki herkes*.
    - *Dağıt* → çıkan **Web uygulaması URL**'sini öğretim üyeleriyle paylaşın.
 
    Bu ayarla öğretim üyelerinin **E-Tabloya erişimi olmasına gerek yoktur**. Tabloyu yalnızca siz görür ve düzenlersiniz. Bağlantıyı sonradan görmek için: E-Tablo menüsü → *Web uygulaması bağlantısını göster*.
