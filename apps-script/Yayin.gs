@@ -169,6 +169,7 @@ function oaTur_(w, kaynak) {
   if (w.type === 'book-chapter') return 'Kitap Bölümü';
   if (w.type === 'book') return 'Kitap';
   if (kaynak.type === 'conference') return 'Tam Bildiri';
+  if (/proceedings|conference|symposium|congress|workshop|kongre|sempozyum|konferans|bildiri/i.test(kaynak.display_name || '')) return 'Tam Bildiri';
   return 'Makale';
 }
 
