@@ -73,7 +73,17 @@ Tüm sayfa/sütun tanımları `Kod.gs` içindeki `SEMA` dizisindedir:
 
 Örneğin yeni bir proje türü eklemek için `Projeler` tanımındaki `secenekler` listesine ekleyin. E-Tablodaki açılır listeyi de (*Veri → Veri doğrulama*) aynı şekilde güncelleyin.
 
+## Rapor dönemi
+
+`Kod.gs` içindeki `RAPOR` sabiti dönemi belirler: yıl 2026, dönem 01.01–31.12.2026, son gönderim 04.12.2026. Form başlığında kalan gün sayısını gösterir. Patent başvurusu, ödül ve etkinlik tarihlerinin dönem içinde olmasını, proje ve bursların 2026'yla kesişmesini denetler. Yeni yılda yalnızca bu sabiti güncelleyin.
+
+## OpenAlex API anahtarı (önerilir)
+
+"Yayınlarımı getir" özelliği OpenAlex'i kullanır. Apps Script, Google'ın ortak IP adreslerinden istek attığı için anahtarsız isteklerde OpenAlex sık sık "çok yoğun" (429) yanıtı verir. Ücretsiz anahtarı https://openalex.org/settings/api-key adresinden alın. Apps Script düzenleyicisinde *Proje Ayarları → Komut dosyası özellikleri → Özellik ekle* ile `OPENALEX_API_KEY` adıyla girin. Anahtar olmadan da "Google Scholar'dan aktar" yolu çalışır.
+
 ## Notlar
+
+- Form, e-tablonun saat dilimini ilk kayıtta betikle aynı yapar (Europe/Istanbul). Aksi halde tarihler bir gün kayar.
 
 - Form, tablo sınırlarını `BAK_yayin`, `BAK_proje` … adlı **adlandırılmış aralıklarda** tutar. Bunları silmeyin; silinirse ilk kayıtta yeniden oluşturulur.
 - Aynı anda birden çok kişi kaydederse kilit mekanizması kayıtların üst üste yazılmasını önler.

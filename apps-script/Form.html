@@ -31,6 +31,8 @@
   .kap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
   header h1 { margin: 0; font-size: 22px; }
   header p { margin: 4px 0 0; color: var(--muted); }
+  .songun { display: inline-block; margin-top: 10px; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13.5px; font-weight: 600; }
+  .songun.yakin { background: var(--warn-soft); color: var(--warn); }
   .demo { background: var(--warn-soft); color: var(--warn); padding: 8px 12px; border-radius: var(--radius);
     margin: 12px 0 0; font-size: 13px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-top: 16px; }
@@ -115,7 +117,8 @@
 <div class="kap">
   <header>
     <h1>BAK 2026 Çıktı Künye – Veri Girişi</h1>
-    <p>Kategori seçin, formu doldurun, “Kaydet”e basın. Kaydınız ilgili sayfaya otomatik eklenir.</p>
+    <p>Bölümümüz öğretim elemanlarının <b>01.01–31.12.2026</b> dönemindeki akademik faaliyet künyeleri bu formla toplanır ve 2026 Birim Faaliyet Raporu’na girer. Adınızı seçin, faaliyet türünü seçin, formu doldurup “Kaydet”e basın.</p>
+    <div class="songun" id="songun"></div>
     <div class="demo" id="demo" hidden>Önizleme modu: Bu sayfa tabloya bağlı değil, girdiğiniz veriler kaydedilmez.</div>
   </header>
 
@@ -142,7 +145,17 @@
 
 <script>
 var VERI = <?!= semaJson ?>;
-var SEMA = VERI.sema, BOLUMLER = VERI.bolumler, KADRO = VERI.kadro;
+var SEMA = VERI.sema, BOLUMLER = VERI.bolumler, KADRO = VERI.kadro, RAPOR = VERI.rapor;
+(function () {
+  var bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+  var p = RAPOR.sonGun.split('-'), son = new Date(+p[0], +p[1] - 1, +p[2]);
+  var kalan = Math.round((son - bugun) / 86400000);
+  var k = document.getElementById('songun');
+  var tarih = p[2] + '.' + p[1] + '.' + p[0];
+  k.textContent = kalan > 0 ? 'Son gün: ' + tarih + ' · ' + kalan + ' gün kaldı'
+    : kalan === 0 ? 'Son gün bugün (' + tarih + ')' : 'Son gün (' + tarih + ') geçti; geç girişler için bölüm BAK üyesine haber veriniz.';
+  if (kalan <= 3) k.classList.add('yakin');
+})();
 var DEMO = !(window.google && google.script && google.script.run);
 
 // ---- Sunucu çağrısı (demo modunda taklit edilir) ----
@@ -212,6 +225,11 @@ function el(tag, attrs, kids) {
 function semaBul(a) { return SEMA.filter(function (s) { return s.anahtar === a; })[0]; }
 function sakla(k, v) { try { localStorage.setItem('bak_' + k, v); } catch (e) {} }
 function oku(k) { try { return localStorage.getItem('bak_' + k) || ''; } catch (e) { return ''; } }
+function ilkTarih(v) {
+  v = String(v || '').trim();
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v); if (m) return m[0];
+  m = /^(\d{2})\.(\d{2})\.(\d{4})/.exec(v); return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+}
 function trTarih(iso) { if (!iso) return ''; var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
 function secenekler(select, liste, bosMetin) {
   select.appendChild(el('option', { value: '', text: bosMetin || 'Seçiniz…' }));
@@ -381,14 +399,14 @@ function alanOlustur(a) {
     case 'uzunMetin':
       g = el('textarea', { id: id, name: ad, placeholder: a.ornek ? 'Örn. ' + a.ornek : '' }); break;
     case 'tarih':
-      g = el('input', { id: id, name: ad, type: 'date' }); break;
+      g = el('input', { id: id, name: ad, type: 'date', min: a.donem ? RAPOR.donemBas : undefined, max: a.donem ? RAPOR.donemSon : undefined }); break;
     case 'sayi':
       g = el('input', { id: id, name: ad, type: 'number', min: '0', step: 'any', inputmode: 'decimal', placeholder: a.ornek ? 'Örn. ' + a.ornek : '' }); break;
     case 'ad':
       g = el('input', { id: id, name: ad, autocomplete: 'name', placeholder: 'Ad Soyad' }); g.value = $('pAd').value; break;
     case 'tarihAraligi':
       g = el('div', { class: 'aralik' }, [
-        el('input', { id: id, name: ad + '_bas', type: 'date', 'aria-label': 'Başlangıç tarihi' }),
+        el('input', { id: id, name: ad + '_bas', type: 'date', 'aria-label': 'Başlangıç tarihi', min: a.donem ? RAPOR.donemBas : undefined, max: a.donem ? RAPOR.donemSon : undefined }),
         el('span', { text: '–' }),
         el('input', { name: ad + '_bit', type: 'date', 'aria-label': 'Bitiş tarihi' })
       ]); break;
@@ -422,14 +440,29 @@ function topla(s, form) {
     hatalar.push('En az bir sayı alanını doldurunuz.');
     s.enAzBiri.forEach(function (c) { form.querySelector('[data-alan="' + c + '"]').classList.add('hata-alan'); });
   }
-  // Başlama/bitiş tarihi tutarlılığı (ör. projeler, burslar)
+  function isaretle(c) { var k = form.querySelector('[data-alan="' + c + '"]'); if (k) k.classList.add('hata-alan'); }
+  var donem = trTarih(RAPOR.donemBas) + '–' + trTarih(RAPOR.donemSon);
+  // Başlama/bitiş tarihi tutarlılığı (ör. projeler, burslar, patent)
   var tarihler = s.alanlar.filter(function (a) { return a.tip === 'tarih'; });
   for (var i = 0; i + 1 < tarihler.length; i++) {
     var b1 = veri[tarihler[i].sutun], b2 = veri[tarihler[i + 1].sutun];
     if (/Başla|Başvuru/.test(tarihler[i].etiket) && b1 && b2 && b2 < b1) {
-      hatalar.push('"' + tarihler[i + 1].etiket + '", "' + tarihler[i].etiket + '"nden önce olamaz.');
-      form.querySelector('[data-alan="' + tarihler[i + 1].sutun + '"]').classList.add('hata-alan');
+      hatalar.push('"' + tarihler[i + 1].etiket + '", "' + tarihler[i].etiket + '" tarihinden önce olamaz.');
+      isaretle(tarihler[i + 1].sutun);
     }
+  }
+  // Rapor dönemi kontrolleri
+  s.alanlar.forEach(function (a) {
+    if (!a.donem || !veri[a.sutun]) return;
+    var t = ilkTarih(veri[a.sutun]);
+    if (t && (t < RAPOR.donemBas || t > RAPOR.donemSon)) {
+      hatalar.push('"' + a.etiket + '" rapor dönemi (' + donem + ') içinde olmalıdır.'); isaretle(a.sutun);
+    }
+  });
+  if (s.donemKesisim) {
+    var bas = veri[s.donemKesisim[0]], bit = veri[s.donemKesisim[1]];
+    if (bas && bas > RAPOR.donemSon) { hatalar.push('Başlama tarihi ' + trTarih(RAPOR.donemSon) + ' sonrasında; 2026’da yürütülmemiş faaliyetler rapora girmez.'); isaretle(s.donemKesisim[0]); }
+    if (bit && bit < RAPOR.donemBas) { hatalar.push('Bitiş tarihi ' + trTarih(RAPOR.donemBas) + ' öncesinde; 2026’dan önce biten faaliyetler rapora girmez.'); isaretle(s.donemKesisim[1]); }
   }
   return { veri: veri, hatalar: hatalar };
 }
@@ -467,7 +500,7 @@ function gonder(s, veri, zorla, btn, mesajKutu) {
 
 // ---- Yayınları otomatik getirme / Scholar'dan aktarma ----
 function iceAktarPanel(s, form) {
-  var buYil = new Date().getFullYear();
+  var buYil = RAPOR.yil;
   var alan = function (c) { return s.alanlar.filter(function (a) { return a.sutun === c; })[0]; };
   var kutu = el('div', { class: 'aktar' });
   kutu.appendChild(el('h3', { text: '⚡ Yayınlarınızı otomatik ekleyin' }));

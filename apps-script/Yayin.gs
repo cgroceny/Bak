@@ -23,7 +23,7 @@ var OA_ALANLAR = 'id,doi,title,publication_year,type,language,cited_by_count,bib
  * @param {string} orcid  İsteğe bağlı ORCID (0000-0000-0000-0000)
  */
 function yayinlariGetir(ad, yil, orcid) {
-  yil = Number(yil) || new Date().getFullYear();
+  yil = Number(yil) || RAPOR.yil;
   var yazarlar = yazarBul_(ad, orcid);
   if (!yazarlar.length) {
     return { yazarlar: [], kayitlar: [], bulunamadi: true };
@@ -54,7 +54,7 @@ function yayinlariGetir(ad, yil, orcid) {
  * Google Scholar'dan dışa aktarılan BibTeX metnini kayıtlara dönüştürür.
  */
 function bibtexAktar(metin, ad, yil) {
-  yil = Number(yil) || new Date().getFullYear();
+  yil = Number(yil) || RAPOR.yil;
   var girdiler = bibtexCoz_(metin);
   if (!girdiler.length) throw new Error('BibTeX metni çözülemedi. Scholar’da "Dışa aktar → BibTeX" sayfasındaki metnin tamamını yapıştırınız.');
   var yilaUygun = girdiler.filter(function (g) { return !g.year || Number(g.year) === yil; });
@@ -62,8 +62,11 @@ function bibtexAktar(metin, ad, yil) {
   yilaUygun = yilaUygun.slice(0, 60);
 
   // OpenAlex'te başlıkla eşleştir (DOI, dil, atıf, İKÇÜ'lü ortak yazarlar için)
+  var anahtar = openAlexAnahtari_();
   var istekler = yilaUygun.map(function (g) {
-    return { url: OPENALEX + '/works?' + sorgu_({ search: g.title, 'per-page': 3, select: OA_ALANLAR }), muteHttpExceptions: true };
+    var p = { search: g.title, 'per-page': 3, select: OA_ALANLAR };
+    if (anahtar) p.api_key = anahtar;
+    return { url: OPENALEX + '/works?' + sorgu_(p), muteHttpExceptions: true };
   });
   var yanitlar = istekler.length ? UrlFetchApp.fetchAll(istekler) : [];
   var mevcut = mevcutYayinlar_();
@@ -228,6 +231,11 @@ function apaAd_(tam) {
  * kadrodaki bir kişiyse adı kadrodaki Türkçe yazımıyla verir ("Cem Gocen" → "Cem Göçen").
  */
 function duzgunAd_(ad) {
+  ad = String(ad || '').trim();
+  if (ad.indexOf(',') !== -1) { // "Gocen, Cem" → "Cem Gocen"
+    var p = ad.split(',');
+    ad = (p.slice(1).join(' ').trim() + ' ' + p[0].trim()).trim();
+  }
   var k = katla_(ad);
   for (var i = 0; i < KADRO.kisiler.length; i++) {
     if (katla_(KADRO.kisiler[i].ad) === k) return KADRO.kisiler[i].ad;
@@ -281,12 +289,38 @@ function yazarBul_(ad, orcid) {
 }
 
 function oaGet_(yol, parametre) {
+  var anahtar = openAlexAnahtari_();
+  if (anahtar) parametre.api_key = anahtar;
   var url = OPENALEX + yol + '?' + sorgu_(parametre);
-  var y = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  if (y.getResponseCode() !== 200) {
-    throw new Error('Yayın veritabanı (OpenAlex) şu an yanıt vermiyor (kod ' + y.getResponseCode() + '). Biraz sonra tekrar deneyiniz.');
+  var y;
+  for (var deneme = 0; deneme < 3; deneme++) {
+    y = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (y.getResponseCode() !== 429 && y.getResponseCode() < 500) break;
+    Utilities.sleep(1500 * (deneme + 1));
+  }
+  var kod = y.getResponseCode();
+  if (kod === 429) {
+    throw new Error('Yayın veritabanı (OpenAlex) şu an çok yoğun. Birkaç dakika sonra tekrar deneyiniz ya da "Google Scholar’dan aktar" seçeneğini kullanınız.');
+  }
+  if (kod !== 200) {
+    throw new Error('Yayın veritabanı (OpenAlex) yanıt vermedi (kod ' + kod + '). "Google Scholar’dan aktar" seçeneğini kullanabilirsiniz.');
   }
   return JSON.parse(y.getContentText());
+}
+
+/**
+ * OpenAlex API anahtarı (ücretsiz: https://openalex.org/settings/api-key).
+ * Apps Script, Google'ın ortak IP'lerinden istek attığı için anahtarsız
+ * isteklerde kota sık dolar. Anahtar, Proje Ayarları → Komut dosyası
+ * özellikleri → OPENALEX_API_KEY olarak girilir (koda yazılmaz).
+ */
+function openAlexAnahtari_() {
+  try {
+    var k = PropertiesService.getScriptProperties().getProperty('OPENALEX_API_KEY');
+    if (k) return k;
+  } catch (e) { /* yoksay */ }
+  // Alternatif: depoya eklenmeyen Ayarlar.gs dosyasında tanımlı sabit
+  return typeof OPENALEX_API_KEY !== 'undefined' ? OPENALEX_API_KEY : '';
 }
 
 function sorgu_(p) {

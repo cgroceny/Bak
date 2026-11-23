@@ -55,119 +55,141 @@ var ULUSAL = ['Ulusal', 'Uluslararası'];
 var EVET_HAYIR = ['Evet', 'Hayır'];
 
 /**
+ * Rapor dönemi (BAK yazısı: 2026 Birim Faaliyet Raporu, 01.01–31.12.2026,
+ * son gönderim 4 Aralık 2026). Yıl değişince yalnızca burayı güncelleyiniz.
+ */
+var RAPOR = {
+  yil: 2026,
+  ad: '2026 Birim Faaliyet Raporu (BFR)',
+  donemBas: '2026-01-01',
+  donemSon: '2026-12-31',
+  sonGun: '2026-12-04'
+};
+
+/**
  * Sayfa şeması. Her kategori:
  *   sayfa      : E-Tablodaki sayfa adı (birebir)
  *   ilk, son   : Veri satırlarının ilk ve son satırı (örnek satır hariç)
  *   tarihSutun : "Veri Giriş Tarihi" sütunu (otomatik doldurulur)
  *   sabit      : Her satıra otomatik yazılan sabit değerler {sutun: değer}
- *   yil        : Bu sütuna kayıt yılı otomatik yazılır
+ *   yil        : Bu sütuna rapor yılı otomatik yazılır
  *   tekrar     : Aynı değer varsa kullanıcıyı uyaran sütun (mükerrer kontrol)
+ *   donemKesisim: [başlama, bitiş] sütunları; faaliyet rapor dönemiyle kesişmelidir
  *   alanlar    : Form alanları
- *       tip: metin | uzunMetin | liste | tarih | sayi | yuzde | ad | bolum | tarihAraligi
- *       ad  : Kullanıcının "Ad Soyad" bilgisiyle ön doldurulur
+ *       tip  : metin | uzunMetin | liste | tarih | sayi | yuzde | ad | bolum | tarihAraligi
+ *       ad   : Kullanıcının "Ad Soyad" bilgisiyle ön doldurulur
  *       bolum: Kullanıcının bölüm bilgisiyle ön doldurulur
+ *       donem: true ise tarih rapor dönemi (01.01–31.12) içinde olmalıdır
  */
 var SEMA = [
   {
     anahtar: 'yayin', baslik: 'Bilimsel Yayın', simge: '📄',
-    aciklama: 'Makale, bildiri, kitap, kitap bölümü',
-    uyari: 'Sadece bu yıl yayımlanmış/basılmış çalışmalarınızı ekleyiniz.',
+    aciklama: 'Makale, bildiri, poster, kitap, kitap bölümü',
+    uyari: 'Yalnızca 01.01–31.12.2026 arasında yayımlanmış çalışmalarınızı ekleyiniz (basılı ya da DOI ile çevrimiçi yayımlanmış). Kabul edilmiş ama yayımlanmamış çalışmalar eklenmez. Her yayını bir kez giriniz.',
     sayfa: 'Bilimsel yayın', ilk: 12, son: 104, tarihSutun: 'N', tekrar: 'C', iceAktar: true,
     alanlar: [
       { sutun: 'B', etiket: 'Yayın Türü', tip: 'liste', zorunlu: true,
-        secenekler: ['Makale', 'Sözlü (Özet) Bildiri', 'Poster', 'Tam Bildiri', 'Kitap Bölümü', 'Kitap'] },
-      { sutun: 'C', etiket: 'Yayın Adı (APA formatında)', tip: 'uzunMetin', zorunlu: true,
-        ipucu: 'Yazarlar, yıl, başlık, dergi, cilt(sayı), sayfa – APA formatında.',
-        ornek: 'Cao, X., Kose, C., Selby, C. P., & Sancar, A. (2024). In vitro DNA repair genomics ... PNAS, 120(43), e2314233120.' },
-      { sutun: 'D', etiket: 'Dili', tip: 'liste', zorunlu: true, secenekler: ['Türkçe', 'İngilizce', 'Almanca', 'Diğer'] },
-      { sutun: 'E', etiket: 'Yayın Sahibi', tip: 'ad', zorunlu: true },
-      { sutun: 'F', etiket: 'Yayım Alanı', tip: 'liste', zorunlu: true, secenekler: ULUSAL },
-      { sutun: 'G', etiket: 'Yayım Yeri Adı, No’su, Sayfa No’su', tip: 'metin',
+        secenekler: ['Makale', 'Sözlü (Özet) Bildiri', 'Poster', 'Tam Bildiri', 'Kitap Bölümü', 'Kitap'],
+        ipucu: 'Bildiri kitabında yalnızca özeti basılan sunumlar için "Sözlü (Özet) Bildiri" seçiniz.' },
+      { sutun: 'C', etiket: 'Yayın Künyesi (APA 7 formatında)', tip: 'uzunMetin', zorunlu: true,
+        ipucu: 'Tüm yazarlar, (yıl), başlık, dergi/kitap adı, cilt(sayı), sayfa ve varsa DOI.',
+        ornek: 'Cao, X., Kose, C., Selby, C. P., & Sancar, A. (2024). In vitro DNA repair genomics using XR-seq ... PNAS, 120(43), e2314233120. https://doi.org/...' },
+      { sutun: 'D', etiket: 'Yayın Dili', tip: 'liste', zorunlu: true, secenekler: ['Türkçe', 'İngilizce', 'Almanca', 'Diğer'] },
+      { sutun: 'E', etiket: 'Yayın Sahibi (bölümünüzdeki öğretim elemanı)', tip: 'ad', zorunlu: true },
+      { sutun: 'F', etiket: 'Yayım Alanı', tip: 'liste', zorunlu: true, secenekler: ULUSAL,
+        ipucu: 'Dergi/etkinlik uluslararası yayın kurulu ve indeksiyle yayın yapıyorsa "Uluslararası", Türkiye’de ulusal ölçekte yayın yapıyorsa "Ulusal".' },
+      { sutun: 'G', etiket: 'Yayım Yeri (dergi/kitap/etkinlik adı, cilt, sayı, sayfa)', tip: 'metin',
         ornek: 'Proceedings of the National Academy of Sciences, 120(43), e2314233120.' },
-      { sutun: 'H', etiket: 'İndeks Adı', tip: 'liste', secenekler: ['SCI', 'SSCI', 'SCIE', 'AHCI', 'ESCI', 'TR Dizin', 'Diğer'] },
-      { sutun: 'I', etiket: 'Bağlı Olduğunuz Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'J', etiket: 'MMF İçinden Ortak Yazarlar', tip: 'uzunMetin',
-        ipucu: 'MMF içinden başka yazar yoksa boş bırakınız.', ornek: 'Cao, X.; Kose, C.' },
-      { sutun: 'K', etiket: 'Dergi Impact Factor (son 5 yıl)', tip: 'metin', ipucu: 'Yoksa "yok" yazınız.', ornek: '3.25' },
-      { sutun: 'L', etiket: 'Q Grubu', tip: 'liste', secenekler: ['Q1', 'Q2', 'Q3', 'Q4', 'Yok'] },
-      { sutun: 'M', etiket: 'Toplam Atıf Sayısı', tip: 'sayi', ornek: '0' }
+      { sutun: 'H', etiket: 'İndeks', tip: 'liste', secenekler: ['SCI', 'SSCI', 'SCIE', 'AHCI', 'ESCI', 'TR Dizin', 'Diğer'],
+        ipucu: 'Derginin taranma durumu (Web of Science Master Journal List / TR Dizin). Taranmıyorsa "Diğer".' },
+      { sutun: 'I', etiket: 'Bağlı Olduğunuz Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'J', etiket: 'MMF’den Ortak Yazarlar', tip: 'uzunMetin',
+        ipucu: 'Mühendislik ve Mimarlık Fakültesi’nden diğer yazarlar. Yoksa boş bırakınız. Aynı yayını ortak yazarınız ayrıca girmesin.', ornek: 'Kaya, A.; Akdağ, İ.' },
+      { sutun: 'K', etiket: 'Dergi Etki Faktörü (5 yıllık JIF)', tip: 'metin', ipucu: 'Clarivate JCR’deki 5 yıllık etki faktörü. Yoksa "yok" yazınız.', ornek: '3.25' },
+      { sutun: 'L', etiket: 'Q Grubu (JCR)', tip: 'liste', secenekler: ['Q1', 'Q2', 'Q3', 'Q4', 'Yok'],
+        ipucu: 'Derginin JCR çeyrek dilimi. SCI/SCIE/SSCI dışı dergiler için "Yok".' },
+      { sutun: 'M', etiket: 'Toplam Atıf Sayısı', tip: 'sayi', ornek: '0', ipucu: 'Yayının bugüne kadar aldığı atıf (Web of Science, Scopus ya da Google Scholar).' }
     ]
   },
   {
     anahtar: 'proje', baslik: 'Bilimsel Araştırma Projesi', simge: '🔬',
-    aciklama: 'Yürütücüsü olduğunuz devam eden/tamamlanan projeler',
-    uyari: 'Bu yıl yürütücüsü olduğunuz devam eden veya tamamlanmış projeleri ekleyiniz.',
-    sayfa: 'Projeler', ilk: 10, son: 154, tarihSutun: 'R', yil: 'D', tekrar: 'F',
+    aciklama: '2026’da yürütücüsü olduğunuz projeler',
+    uyari: '2026 içinde yürütücüsü olduğunuz devam eden veya tamamlanan projeleri ekleyiniz. Araştırmacı olduğunuz projeleri yürütücüsü girer.',
+    sayfa: 'Projeler', ilk: 10, son: 154, tarihSutun: 'R', yil: 'D', tekrar: 'F', donemKesisim: ['L', 'M'],
     alanlar: [
-      { sutun: 'E', etiket: 'Proje Türü', tip: 'liste', zorunlu: true,
+      { sutun: 'E', etiket: 'Proje Türü / Destek Programı', tip: 'liste', zorunlu: true,
         secenekler: ['BAP TEZ', 'BAP', 'GAP', 'COST', 'İZKA', 'KOSGEB', 'TÜSEB', 'TÜBİTAK 1001', 'TÜBİTAK 1002',
           'TÜBİTAK 1003', 'TÜBİTAK 1004', 'TÜBİTAK 1005', 'TÜBİTAK 1007', 'TÜBİTAK 2209', 'TÜBİTAK 2218',
-          'TÜBİTAK 2219', 'TÜBİTAK 3001', 'TÜBİTAK 3005', 'TÜBİTAK 3501', 'DİĞER'] },
+          'TÜBİTAK 2219', 'TÜBİTAK 3001', 'TÜBİTAK 3005', 'TÜBİTAK 3501', 'DİĞER'],
+        ipucu: 'Listede olmayan programlar (AB Ufuk Avrupa, sanayi projesi vb.) için "DİĞER" seçip program adını proje adının sonuna parantez içinde yazınız.' },
       { sutun: 'F', etiket: 'Proje Adı', tip: 'uzunMetin', zorunlu: true },
       { sutun: 'G', etiket: 'Proje Yürütücüsü', tip: 'ad', zorunlu: true },
-      { sutun: 'K', etiket: 'Bölüm / Anabilim Dalı', tip: 'bolum', zorunlu: true },
-      { sutun: 'C', etiket: 'Tamamlanma Durumu', tip: 'yuzde', zorunlu: true },
-      { sutun: 'H', etiket: 'Proje Bütçesi (TL)', tip: 'sayi', ornek: '50000' },
-      { sutun: 'I', etiket: 'Harcanan (TL)', tip: 'sayi', ornek: '25000' },
+      { sutun: 'K', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'C', etiket: 'Tamamlanma Durumu', tip: 'yuzde', zorunlu: true, ipucu: '31.12.2026 itibarıyla tahmini ilerleme. Tamamlanan proje için %100.' },
+      { sutun: 'H', etiket: 'Proje Bütçesi (TL)', tip: 'sayi', ornek: '50000', ipucu: 'Onaylanan toplam bütçe.' },
+      { sutun: 'I', etiket: 'Harcanan (TL)', tip: 'sayi', ornek: '25000', ipucu: 'Başlangıçtan bugüne harcanan toplam tutar.' },
       { sutun: 'J', etiket: 'Proje Süresi (Ay)', tip: 'sayi', ornek: '24' },
       { sutun: 'L', etiket: 'Proje Başlama Tarihi', tip: 'tarih' },
-      { sutun: 'M', etiket: 'Proje Bitiş Tarihi', tip: 'tarih' },
-      { sutun: 'N', etiket: 'Araştırmacı Öğretim Üyelerinin Adı', tip: 'uzunMetin', ipucu: 'Her isim ayrı satıra.' },
-      { sutun: 'O', etiket: 'TTO & Teknokent Projesi mi?', tip: 'liste', secenekler: EVET_HAYIR },
-      { sutun: 'P', etiket: 'Uluslararası İşbirliği', tip: 'liste', secenekler: EVET_HAYIR },
-      { sutun: 'Q', etiket: 'Uluslararası Fon Oranı', tip: 'yuzde' }
+      { sutun: 'M', etiket: 'Proje Bitiş Tarihi', tip: 'tarih', ipucu: 'Devam eden projede planlanan bitiş tarihi.' },
+      { sutun: 'N', etiket: 'Araştırmacılar', tip: 'uzunMetin', ipucu: 'Projedeki diğer öğretim elemanları, her isim ayrı satıra.' },
+      { sutun: 'O', etiket: 'TTO / Teknokent Projesi mi?', tip: 'liste', secenekler: EVET_HAYIR },
+      { sutun: 'P', etiket: 'Uluslararası İşbirliği Var mı?', tip: 'liste', secenekler: EVET_HAYIR },
+      { sutun: 'Q', etiket: 'Uluslararası Fon Oranı', tip: 'yuzde', ipucu: 'Bütçenin yurt dışı kaynaklı kısmı. Yoksa %0.' }
     ]
   },
   {
-    anahtar: 'toplanti', baslik: 'Bilimsel Toplantı / Faaliyet', simge: '🎤',
-    aciklama: 'Birimin düzenlediği kongre, konferans, seminer vb.',
-    uyari: 'Sadece bu yıl yapılmış faaliyetleri ekleyiniz.',
+    anahtar: 'toplanti', baslik: 'Bilimsel Toplantı / Etkinlik', simge: '🎤',
+    aciklama: 'Bölümün düzenlediği kongre, konferans, seminer, gezi vb.',
+    uyari: 'Bölümünüzün düzenlediği ya da düzenlemesinde yer aldığı, 2026 içinde yapılmış etkinlikleri ekleyiniz. Katılımcı veya konuşmacı olduğunuz etkinlikler buraya girilmez.',
     sayfa: 'Bilimsel toplanti ve Faaliyet', ilk: 9, son: 44, tarihSutun: 'I', tekrar: 'F',
     alanlar: [
-      { sutun: 'C', etiket: 'Düzenleyen Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'D', etiket: 'Bilimsel Toplantı Türü', tip: 'liste', zorunlu: true,
+      { sutun: 'C', etiket: 'Düzenleyen Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'D', etiket: 'Etkinlik Türü', tip: 'liste', zorunlu: true,
         secenekler: ['Sempozyum/Kongre', 'Konferans', 'Panel', 'Eğitim Semineri', 'Diğer Seminerler', 'Açık oturum',
           'Söyleşi', 'Tiyatro', 'Konser', 'Sergi', 'Turnuva', 'Teknik gezi'] },
-      { sutun: 'E', etiket: 'Yayım Alanı', tip: 'liste', zorunlu: true, secenekler: ['Ulusal', 'Uluslararası', 'Yerel (Üniversite içi)'] },
-      { sutun: 'F', etiket: 'Konusu / Adı', tip: 'metin', zorunlu: true, ornek: 'ICHE 2026' },
-      { sutun: 'G', etiket: 'Yer', tip: 'metin', ornek: 'İzmir' },
-      { sutun: 'H', etiket: 'Tarih Aralığı', tip: 'tarihAraligi', zorunlu: true }
+      { sutun: 'E', etiket: 'Kapsamı', tip: 'liste', zorunlu: true, secenekler: ['Ulusal', 'Uluslararası', 'Yerel (Üniversite içi)'] },
+      { sutun: 'F', etiket: 'Etkinliğin Adı / Konusu', tip: 'metin', zorunlu: true, ornek: 'ICHE 2026' },
+      { sutun: 'G', etiket: 'Yer', tip: 'metin', ornek: 'İKÇÜ Çiğli Yerleşkesi, İzmir' },
+      { sutun: 'H', etiket: 'Tarih Aralığı', tip: 'tarihAraligi', zorunlu: true, donem: true, ipucu: 'Tek günlük etkinlikte yalnızca başlangıç tarihini seçiniz.' }
     ]
   },
   {
     anahtar: 'patent', baslik: 'Patent / Faydalı Model / Tasarım', simge: '💡',
-    aciklama: 'Bu yıl yapılan başvurular',
+    aciklama: '2026’da yapılan başvurular',
+    uyari: '01.01–31.12.2026 arasında yapılan patent, faydalı model ve tasarım başvurularını ekleyiniz.',
     sayfa: 'Patent', ilk: 9, son: 25, tarihSutun: 'I', sabit: { B: 'MMF' }, tekrar: 'E',
     alanlar: [
       { sutun: 'C', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
-      { sutun: 'D', etiket: 'Başvuru Yapan Adı Soyadı', tip: 'ad', zorunlu: true },
-      { sutun: 'E', etiket: 'Patent Adı', tip: 'metin', zorunlu: true },
-      { sutun: 'F', etiket: 'Patent Başvuru Tarihi', tip: 'tarih', zorunlu: true },
-      { sutun: 'G', etiket: 'Patent Sonuçlanma Tarihi', tip: 'tarih' },
+      { sutun: 'D', etiket: 'Başvuru Sahibi (Ad Soyad)', tip: 'ad', zorunlu: true },
+      { sutun: 'E', etiket: 'Buluşun Adı', tip: 'metin', zorunlu: true, ipucu: 'Faydalı model veya tasarım ise adın sonuna "(Faydalı Model)" / "(Tasarım)" ekleyiniz.' },
+      { sutun: 'F', etiket: 'Başvuru Tarihi', tip: 'tarih', zorunlu: true, donem: true },
+      { sutun: 'G', etiket: 'Sonuçlanma Tarihi', tip: 'tarih', ipucu: 'Henüz sonuçlanmadıysa boş bırakınız.' },
       { sutun: 'H', etiket: 'Durumu', tip: 'liste', zorunlu: true, secenekler: ['Olumlu', 'Olumsuz', 'Değerlendirmede'] }
     ]
   },
   {
     anahtar: 'odul', baslik: 'Ödül', simge: '🏆',
     aciklama: 'YÖK, TÜBA, TÜBİTAK Bilim, Teşvik ve Sanat Ödülleri',
+    uyari: 'Yalnızca YÖK, TÜBA ve TÜBİTAK’ın verdiği, 2026’da alınan Bilim, Teşvik ve Sanat ödüllerini ekleyiniz.',
     sayfa: 'Ödüller', ilk: 6, son: 31, tarihSutun: 'H',
     alanlar: [
-      { sutun: 'B', etiket: 'Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'C', etiket: 'Ödül Verilen Öğretim Üyesi', tip: 'ad', zorunlu: true },
+      { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'C', etiket: 'Ödülü Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
       { sutun: 'D', etiket: 'Ödül Türü', tip: 'liste', zorunlu: true, secenekler: ['Bilim Ödülü', 'Teşvik Ödülü', 'Sanat Ödülü'] },
       { sutun: 'E', etiket: 'Veren Kurum', tip: 'metin', zorunlu: true, ornek: 'TÜBİTAK' },
-      { sutun: 'F', etiket: 'Veriliş Tarihi', tip: 'tarih', zorunlu: true },
-      { sutun: 'G', etiket: 'Ödül Sebebi', tip: 'metin', ornek: 'Bilimsel Yayın' }
+      { sutun: 'F', etiket: 'Veriliş Tarihi', tip: 'tarih', zorunlu: true, donem: true },
+      { sutun: 'G', etiket: 'Ödülün Gerekçesi', tip: 'metin', ornek: 'Elektromanyetik alanlarda bilimsel katkı' }
     ]
   },
   {
     anahtar: 'bursTubitak', baslik: 'TÜBİTAK Araştırma Bursu', simge: '🎓',
-    aciklama: 'TÜBİTAK’ın verdiği ulusal/uluslararası araştırma bursu',
-    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'I', ozet: ['G', 'D', 'H'],
+    aciklama: 'TÜBİTAK’tan aldığınız yurt içi/yurt dışı araştırma bursu',
+    uyari: '2026 içinde devam eden, tamamlanan veya iptal edilen TÜBİTAK araştırma burslarını (ör. 2219, 2218) ekleyiniz.',
+    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'I', ozet: ['G', 'D', 'H'], donemKesisim: ['E', 'F'],
     alanlar: [
-      { sutun: 'B', etiket: 'Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'C', etiket: 'Burs Verilen Öğretim Üyesi', tip: 'ad', zorunlu: true },
-      { sutun: 'D', etiket: 'Türü', tip: 'liste', zorunlu: true, secenekler: ULUSAL },
+      { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'C', etiket: 'Bursu Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
+      { sutun: 'D', etiket: 'Kapsamı', tip: 'liste', zorunlu: true, secenekler: ULUSAL, ipucu: 'Yurt dışı araştırma bursu ise "Uluslararası".' },
       { sutun: 'E', etiket: 'Başlama Tarihi', tip: 'tarih' },
       { sutun: 'F', etiket: 'Bitiş Tarihi', tip: 'tarih' },
       { sutun: 'G', etiket: 'Araştırmanın Başlığı (varsa)', tip: 'metin' },
@@ -176,46 +198,49 @@ var SEMA = [
   },
   {
     anahtar: 'bursArge', baslik: 'Kurum Destekli Ar-Ge Projesi', simge: '🏢',
-    aciklama: 'Özel veya resmi kurumların desteklediği Ar-Ge projesi',
-    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'R', ozet: ['P', 'M', 'Q'],
+    aciklama: 'Özel/resmi kurumların desteklediği Ar-Ge projeleri',
+    uyari: 'Ulusal veya uluslararası özel ya da resmi kurumların desteklediği, 2026 içinde süren Ar-Ge projelerini ekleyiniz (TÜBİTAK/BAP projeleri "Bilimsel Araştırma Projesi" bölümüne girilir).',
+    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'R', ozet: ['P', 'M', 'Q'], donemKesisim: ['N', 'O'],
     alanlar: [
-      { sutun: 'K', etiket: 'Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'L', etiket: 'Destek Verilen Öğretim Üyesi', tip: 'ad', zorunlu: true },
-      { sutun: 'M', etiket: 'Türü', tip: 'liste', zorunlu: true, secenekler: ULUSAL },
+      { sutun: 'K', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'L', etiket: 'Yürütücü Öğretim Elemanı', tip: 'ad', zorunlu: true },
+      { sutun: 'M', etiket: 'Kapsamı', tip: 'liste', zorunlu: true, secenekler: ULUSAL },
       { sutun: 'N', etiket: 'Başlama Tarihi', tip: 'tarih' },
       { sutun: 'O', etiket: 'Bitiş Tarihi', tip: 'tarih' },
-      { sutun: 'P', etiket: 'Araştırmanın Başlığı (varsa)', tip: 'metin' },
+      { sutun: 'P', etiket: 'Projenin Başlığı ve Destekleyen Kurum', tip: 'metin', ornek: 'Akıllı şebeke izleme sistemi (X A.Ş.)' },
       { sutun: 'Q', etiket: 'Durumu', tip: 'liste', zorunlu: true, secenekler: ['Devam eden', 'Tamamlanmış', 'İptal edilmiş'] }
     ]
   },
   {
     anahtar: 'editorluk', baslik: 'Editörlük ve Hakemlik', simge: '📝',
-    aciklama: 'Bu yıl editörlük yaptığınız kitap / hakemlik yaptığınız dergi sayısı',
+    aciklama: '2026’daki kitap editörlüğü ve dergi hakemliği sayıları',
+    uyari: '2026 içinde editörlüğünü yaptığınız kitap sayısını ve hakemlik yaptığınız farklı dergi sayısını giriniz. Her öğretim elemanı bu formu bir kez doldurur.',
     sayfa: 'Editörlük ve hakemlik', ilk: 8, son: 27, tarihSutun: 'G',
     enAzBiri: ['D', 'F'], ozet: ['D', 'F'], ozetEtiket: { D: 'Editörlük (kitap)', F: 'Hakemlik (dergi)' },
     alanlar: [
-      { sutun: 'B', etiket: 'Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: null, anahtar: 'adSoyad', etiket: 'Öğretim Üyesi', tip: 'ad', zorunlu: true },
-      { sutun: 'D', etiket: 'Editörlük Yaptığı Kitap Sayısı (1 yılda)', tip: 'sayi', ornek: '1' },
-      { sutun: 'F', etiket: 'Hakemlik Yaptığı Dergi Sayısı (1 yılda)', tip: 'sayi', ornek: '4' }
+      { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: null, anahtar: 'adSoyad', etiket: 'Öğretim Elemanı', tip: 'ad', zorunlu: true },
+      { sutun: 'D', etiket: 'Editörlüğünü Yaptığınız Kitap Sayısı', tip: 'sayi', ornek: '1', ipucu: 'Editör veya bölüm editörü olduğunuz kitaplar.' },
+      { sutun: 'F', etiket: 'Hakemlik Yaptığınız Dergi Sayısı', tip: 'sayi', ornek: '4', ipucu: 'Makale sayısı değil, farklı dergi sayısı.' }
     ],
     // Ad, yalnızca ilgili sayı girildiyse "Editörlük Yapan" (C) / "Hakemlik Yapan" (E) sütununa yazılır.
     kosulluAd: { C: 'D', E: 'F' }
   },
   {
-    anahtar: 'egitici', baslik: 'Eğitici Eğitimi Faaliyeti', simge: '👩‍🏫',
-    aciklama: 'Aldığınız eğitici eğitimleri (herhangi bir yıl olabilir)',
+    anahtar: 'egitici', baslik: 'Eğitici Eğitimi', simge: '👩‍🏫',
+    aciklama: 'Aldığınız eğitici eğitimleri (yıl sınırı yok)',
+    uyari: 'Öğretim becerilerine yönelik aldığınız eğitimleri ekleyiniz. Bu bölümde yıl sınırı yoktur; daha önce bildirilmemiş tüm eğitimler girilebilir.',
     sayfa: 'Eğitici Eğitimi Faaliyetleri', ilk: 5, son: 30, tarihSutun: 'I',
     alanlar: [
-      { sutun: 'B', etiket: 'Alt Birim', tip: 'bolum', zorunlu: true },
-      { sutun: 'C', etiket: 'Eğitim Alan Öğretim Üyesi', tip: 'ad', zorunlu: true },
-      { sutun: 'D', etiket: 'Eğitici Eğitim Faaliyeti', tip: 'liste', zorunlu: true,
+      { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
+      { sutun: 'C', etiket: 'Eğitimi Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
+      { sutun: 'D', etiket: 'Eğitimin Konusu', tip: 'liste', zorunlu: true,
         secenekler: ['Öğrenme Yönetim Sistemi', 'Eğitici Özellikleri', 'Eğitimde Danışmanlık', 'Dijital Öğretme Yöntemleri',
           'Program Geliştirme', 'Öğrenme-Öğretim Yöntemleri', 'Ölçme-Değerlendirme', 'İletişim Becerileri',
           'Eğitimde 21.yy Becerileri', 'Pedagojik Formasyon'] },
-      { sutun: 'E', etiket: 'Türü', tip: 'liste', zorunlu: true, secenekler: ['Proje Eğitimi', 'Sertifika Eğitimi', 'Yüksek Lisans Eğitimi', 'Diğer'] },
-      { sutun: 'F', etiket: 'Türü "Diğer" ise açıklayınız', tip: 'metin', goster: { sutun: 'E', deger: 'Diğer' } },
-      { sutun: 'G', etiket: 'Veren Kurum', tip: 'metin', ornek: 'İKÇÜ Eğitim Fakültesi' },
+      { sutun: 'E', etiket: 'Eğitimin Türü', tip: 'liste', zorunlu: true, secenekler: ['Proje Eğitimi', 'Sertifika Eğitimi', 'Yüksek Lisans Eğitimi', 'Diğer'] },
+      { sutun: 'F', etiket: 'Türü "Diğer" ise açıklayınız', tip: 'metin', zorunlu: true, goster: { sutun: 'E', deger: 'Diğer' } },
+      { sutun: 'G', etiket: 'Veren Kurum', tip: 'metin', ornek: 'İKÇÜ Uzaktan Eğitim Merkezi' },
       { sutun: 'H', etiket: 'Veriliş Tarihi', tip: 'tarih' }
     ]
   }
@@ -261,7 +286,7 @@ function baglantiGoster() {
 
 function sayfaOlustur_() {
   var t = HtmlService.createTemplateFromFile('Form');
-  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER, kadro: KADRO });
+  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER, kadro: KADRO, rapor: RAPOR });
   return t.evaluate();
 }
 
@@ -286,6 +311,8 @@ function kaydet(anahtar, veri, zorla) {
     var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
     var sh = ss.getSheetByName(s.sayfa);
     if (!sh) throw new Error('"' + s.sayfa + '" sayfası bulunamadı. Sayfa adını değiştirmeyiniz.');
+    // Tarihlerin bir gün kaymaması için tablonun saat dilimi betikle (Europe/Istanbul) aynı olmalı.
+    if (ss.getSpreadsheetTimeZone() !== Session.getScriptTimeZone()) ss.setSpreadsheetTimeZone(Session.getScriptTimeZone());
 
     var aralik = tabloAraligi_(ss, sh, s);
     var ilk = aralik.getRow();
@@ -337,11 +364,12 @@ function kaydet(anahtar, veri, zorla) {
       Object.keys(s.sabit).forEach(function (k) { yazilacak[k] = { deger: s.sabit[k], alan: { tip: 'metin' } }; });
     }
     var simdi = new Date();
-    if (s.yil) yazilacak[s.yil] = { deger: simdi.getFullYear(), alan: { tip: 'sayi' } };
+    if (s.yil) yazilacak[s.yil] = { deger: RAPOR.yil, alan: { tip: 'sayi' } };
 
     Object.keys(yazilacak).forEach(function (sutun) {
       var h = sh.getRange(satir, sutunNo_(sutun));
       var y = yazilacak[sutun];
+      if (y.alan.tip === 'tarihAraligi') h.setNumberFormat('@'); // "01.02.2026" metin kalsın, tarihe çevrilmesin
       h.setValue(y.deger);
       if (y.alan.tip === 'tarih') h.setNumberFormat(TARIH_BICIMI);
       if (y.alan.tip === 'yuzde') h.setNumberFormat('0%');
@@ -422,6 +450,19 @@ function dogrula_(s, veri) {
       throw new Error('Geçersiz bölüm: ' + v);
     }
   });
+  s.alanlar.forEach(function (a) {
+    if (!a.donem || !a.sutun || (a.goster && veri[a.goster.sutun] !== a.goster.deger)) return;
+    var t = ilkTarih_(veri[a.sutun]);
+    if (t && (t < RAPOR.donemBas || t > RAPOR.donemSon)) {
+      throw new Error('"' + a.etiket + '" rapor dönemi (' + trTarih_(RAPOR.donemBas) + '–' + trTarih_(RAPOR.donemSon) + ') içinde olmalıdır.');
+    }
+  });
+  if (s.donemKesisim) {
+    var bas = veri[s.donemKesisim[0]], bit = veri[s.donemKesisim[1]];
+    if (bas && bas > RAPOR.donemSon) throw new Error('Başlama tarihi ' + trTarih_(RAPOR.donemSon) + ' sonrasında olamaz; 2026’da yürütülmemiş faaliyetler rapora girmez.');
+    if (bit && bit < RAPOR.donemBas) throw new Error('Bitiş tarihi ' + trTarih_(RAPOR.donemBas) + ' öncesinde; 2026’dan önce biten faaliyetler rapora girmez.');
+    if (bas && bit && bit < bas) throw new Error('Bitiş tarihi başlama tarihinden önce olamaz.');
+  }
   if (s.enAzBiri) {
     var dolu = s.enAzBiri.some(function (c) { return veri[c] !== undefined && String(veri[c]).trim() !== ''; });
     if (!dolu) throw new Error('En az bir sayı alanını doldurunuz.');
@@ -452,6 +493,17 @@ function degerDonustur_(alan, v) {
       return v;
   }
 }
+
+/** "2026-03-05" ya da "05.03.2026 – 07.03.2026" → "2026-03-05" */
+function ilkTarih_(v) {
+  v = String(v || '').trim();
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+  if (m) return m[0];
+  m = /^(\d{2})\.(\d{2})\.(\d{4})/.exec(v);
+  return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+}
+
+function trTarih_(iso) { var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
 
 function girdiSutunlari_(s) {
   var c = s.alanlar.filter(function (a) { return a.sutun; }).map(function (a) { return a.sutun; });
