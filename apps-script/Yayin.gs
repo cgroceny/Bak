@@ -135,7 +135,7 @@ function oaKayit_(w, ad, benimIdler, mevcut) {
   return {
     kaynak: 'OpenAlex', baslik: w.title || '', doi: doi, yil: w.publication_year,
     onbaski: w.type === 'preprint' || kaynak.type === 'repository',
-    mevcut: mevcutMu_(w.title, mevcut),
+    mevcut: mevcutMu_(w.title, doi, mevcut, ad),
     veri: {
       B: tur, C: apa, D: dil, E: ad, F: ulusal ? 'Ulusal' : 'Uluslararası',
       G: yayimYeri_(dergi, b.volume, b.issue, sayfa), J: ikcuOrtak.join('; '),
@@ -157,7 +157,7 @@ function bibKayit_(g, ad, mevcut) {
     cilt: g.volume, sayi: g.number, sayfa: sayfa, yayinevi: g.publisher, doi: g.doi
   });
   return {
-    kaynak: 'Scholar', baslik: g.title, doi: g.doi || '', yil: g.year, mevcut: mevcutMu_(g.title, mevcut),
+    kaynak: 'Scholar', baslik: g.title, doi: g.doi || '', yil: g.year, mevcut: mevcutMu_(g.title, g.doi, mevcut, ad),
     veri: {
       B: tur, C: apa, D: dil, E: ad, F: dil === 'Türkçe' ? 'Ulusal' : 'Uluslararası',
       G: yayimYeri_(kaynak, g.volume, g.number, sayfa), J: '', M: ''
@@ -345,14 +345,30 @@ function mevcutYayinlar_() {
   var sh = ss.getSheetByName(s.sayfa);
   if (!sh) return [];
   var r = tabloAraligi_(ss, sh, s);
-  return sh.getRange(r.getRow(), sutunNo_('C'), r.getNumRows(), 1).getDisplayValues()
-    .map(function (x) { return katla_(x[0]); }).filter(Boolean);
+  var v = sh.getRange(r.getRow(), 1, r.getNumRows(), sutunNo_('J')).getDisplayValues();
+  return v.map(function (x, i) {
+    return { satir: r.getRow() + i, imza: kunyeImza_(x[sutunNo_('C') - 1]), giren: x[sutunNo_('E') - 1], ortak: x[sutunNo_('J') - 1] };
+  }).filter(function (x) { return x.imza.tum; });
 }
 
-function mevcutMu_(baslik, mevcut) {
+/**
+ * Yayın tabloda var mı? Varsa kimin girdiğini ve kişinin zaten ilişkili
+ * (kendisi girmiş ya da ortak yazar olarak ekli) olup olmadığını döndürür.
+ */
+function mevcutMu_(baslik, doi, mevcut, ad) {
   var b = katla_(baslik);
-  if (b.length < 12) return false;
-  return mevcut.some(function (m) { return m.indexOf(b) !== -1; });
+  doi = String(doi || '').toLowerCase();
+  var ka = kisiAnahtar_(ad);
+  for (var i = 0; i < mevcut.length; i++) {
+    var m = mevcut[i];
+    if ((doi && m.imza.doi === doi) || (b.length >= 12 && (m.imza.baslik === b || m.imza.tum.indexOf(b) !== -1))) {
+      return {
+        satir: m.satir, giren: m.giren,
+        iliskili: katla_(m.giren) === ka.tam || iliskili_(m.ortak, ka)
+      };
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

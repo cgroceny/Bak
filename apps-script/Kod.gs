@@ -27,27 +27,28 @@ var BOLUMLER = [
 /**
  * Elektrik-Elektronik Mühendisliği akademik kadrosu (formda "adınızı seçin" listesi).
  * Kaynak: https://eee.ikcu.edu.tr/Personel/Akademik/1048 (23.11.2026).
+ * kisa: EEE_2026_Ciktilar dosyasında kişinin sütun başlığı (7. satır).
  * Kadro değiştiğinde bu listeyi güncelleyiniz. Listede olmayanlar adını elle yazabilir.
  */
 var KADRO = {
   bolum: 'Elektrik Elektronik Müh.',
   kisiler: [
-    { unvan: 'Prof. Dr.', ad: 'Adnan Kaya', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Prof. Dr.', ad: 'Merih Palandöken', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Prof. Dr.', ad: 'Savaş Şahin', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Doç. Dr.', ad: 'Kamil Çetin', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Doç. Dr.', ad: 'Mehmet Erdal Özbek', abd: 'Telekomünikasyon' },
-    { unvan: 'Doç. Dr.', ad: 'Volkan Kılıç', abd: 'Devreler ve Sistemler' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Erhan Demirok', abd: 'Elektrik Tesisleri' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Meryem Deniz', abd: 'Elektronik' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Saadet Simay Göztepe', abd: 'Telekomünikasyon' },
-    { unvan: 'Öğr. Gör. Dr.', ad: 'Ferhat Bayram', abd: 'Elektrik Makinaları' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'Cem Göçen', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'İsmail Akdağ', abd: 'Devreler ve Sistemler' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'Mehmet Uğur Soydemir', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Arş. Gör.', ad: 'Burcu Barış', abd: 'Telekomünikasyon' },
-    { unvan: 'Arş. Gör.', ad: 'Mehmet İhsan Hekimhan', abd: 'Elektrik Makinaları' },
-    { unvan: 'Arş. Gör.', ad: 'Onur Karadal', abd: 'Telekomünikasyon' }
+    { unvan: 'Prof. Dr.', ad: 'Adnan Kaya', kisa: 'AK', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Prof. Dr.', ad: 'Merih Palandöken', kisa: 'MP', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Prof. Dr.', ad: 'Savaş Şahin', kisa: 'SŞ', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Doç. Dr.', ad: 'Kamil Çetin', kisa: 'KÇ', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Doç. Dr.', ad: 'Mehmet Erdal Özbek', kisa: 'MEÖ', abd: 'Telekomünikasyon' },
+    { unvan: 'Doç. Dr.', ad: 'Volkan Kılıç', kisa: 'VK', abd: 'Devreler ve Sistemler' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Erhan Demirok', kisa: 'ED', abd: 'Elektrik Tesisleri' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Meryem Deniz', kisa: 'MD', abd: 'Elektronik' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Saadet Simay Göztepe', kisa: 'SSY', abd: 'Telekomünikasyon' },
+    { unvan: 'Öğr. Gör. Dr.', ad: 'Ferhat Bayram', kisa: 'FB', abd: 'Elektrik Makinaları' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Cem Göçen', kisa: 'CG', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'İsmail Akdağ', kisa: 'İA', abd: 'Devreler ve Sistemler' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Mehmet Uğur Soydemir', kisa: 'MUS', abd: 'Kontrol ve Kumanda Sistemleri' },
+    { unvan: 'Arş. Gör.', ad: 'Burcu Barış', kisa: 'BB', abd: 'Telekomünikasyon' },
+    { unvan: 'Arş. Gör.', ad: 'Mehmet İhsan Hekimhan', kisa: 'MİH', abd: 'Elektrik Makinaları' },
+    { unvan: 'Arş. Gör.', ad: 'Onur Karadal', kisa: 'OK', abd: 'Telekomünikasyon' }
   ]
 };
 
@@ -75,6 +76,9 @@ var RAPOR = {
  *   yil        : Bu sütuna rapor yılı otomatik yazılır
  *   tekrar     : Aynı değer varsa kullanıcıyı uyaran sütun (mükerrer kontrol)
  *   donemKesisim: [başlama, bitiş] sütunları; faaliyet rapor dönemiyle kesişmelidir
+ *   ortakSutun : Ortak yazar/araştırmacı adlarının tutulduğu sütun (mükerrer girişte ad buraya eklenir)
+ *   kisiBasinaTek: Kişi başına tek satır; tekrar kaydedilince satır güncellenir
+ *   sonEk      : {sutun, alan} – alanın değeri sütundaki metnin sonuna "(…)" olarak eklenir
  *   alanlar    : Form alanları
  *       tip  : metin | uzunMetin | liste | tarih | sayi | yuzde | ad | bolum | tarihAraligi
  *       ad   : Kullanıcının "Ad Soyad" bilgisiyle ön doldurulur
@@ -86,7 +90,7 @@ var SEMA = [
     anahtar: 'yayin', baslik: 'Bilimsel Yayın', simge: '📄',
     aciklama: 'Makale, bildiri, poster, kitap, kitap bölümü',
     uyari: 'Yalnızca 01.01–31.12.2026 arasında yayımlanmış çalışmalarınızı ekleyiniz (basılı ya da DOI ile çevrimiçi yayımlanmış). Kabul edilmiş ama yayımlanmamış çalışmalar eklenmez. Her yayını bir kez giriniz.',
-    sayfa: 'Bilimsel yayın', ilk: 12, son: 104, tarihSutun: 'N', tekrar: 'C', iceAktar: true,
+    sayfa: 'Bilimsel yayın', ilk: 12, son: 104, tarihSutun: 'N', tekrar: 'C', iceAktar: true, ortakSutun: 'J',
     alanlar: [
       { sutun: 'B', etiket: 'Yayın Türü', tip: 'liste', zorunlu: true,
         secenekler: ['Makale', 'Sözlü (Özet) Bildiri', 'Poster', 'Tam Bildiri', 'Kitap Bölümü', 'Kitap'],
@@ -104,7 +108,7 @@ var SEMA = [
         ipucu: 'Derginin taranma durumu (Web of Science Master Journal List / TR Dizin). Taranmıyorsa "Diğer".' },
       { sutun: 'I', etiket: 'Bağlı Olduğunuz Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'J', etiket: 'MMF’den Ortak Yazarlar', tip: 'uzunMetin',
-        ipucu: 'Mühendislik ve Mimarlık Fakültesi’nden diğer yazarlar. Yoksa boş bırakınız. Aynı yayını ortak yazarınız ayrıca girmesin.', ornek: 'Kaya, A.; Akdağ, İ.' },
+        ipucu: 'Mühendislik ve Mimarlık Fakültesi’nden diğer yazarlar, “Soyad, A.” biçiminde. Yoksa boş bırakınız. Ortak yazarınız aynı yayını girmeye çalışırsa form yeni satır açmaz, adını buraya ekler.', ornek: 'Kaya, A.; Akdağ, İ.' },
       { sutun: 'K', etiket: 'Dergi Etki Faktörü (5 yıllık JIF)', tip: 'metin', ipucu: 'Clarivate JCR’deki 5 yıllık etki faktörü. Yoksa "yok" yazınız.', ornek: '3.25' },
       { sutun: 'L', etiket: 'Q Grubu (JCR)', tip: 'liste', secenekler: ['Q1', 'Q2', 'Q3', 'Q4', 'Yok'],
         ipucu: 'Derginin JCR çeyrek dilimi. SCI/SCIE/SSCI dışı dergiler için "Yok".' },
@@ -115,7 +119,7 @@ var SEMA = [
     anahtar: 'proje', baslik: 'Bilimsel Araştırma Projesi', simge: '🔬',
     aciklama: '2026’da yürütücüsü olduğunuz projeler',
     uyari: '2026 içinde yürütücüsü olduğunuz devam eden veya tamamlanan projeleri ekleyiniz. Araştırmacı olduğunuz projeleri yürütücüsü girer.',
-    sayfa: 'Projeler', ilk: 10, son: 154, tarihSutun: 'R', yil: 'D', tekrar: 'F', donemKesisim: ['L', 'M'],
+    sayfa: 'Projeler', ilk: 10, son: 154, tarihSutun: 'R', yil: 'D', tekrar: 'F', donemKesisim: ['L', 'M'], ortakSutun: 'N',
     alanlar: [
       { sutun: 'E', etiket: 'Proje Türü / Destek Programı', tip: 'liste', zorunlu: true,
         secenekler: ['BAP TEZ', 'BAP', 'GAP', 'COST', 'İZKA', 'KOSGEB', 'TÜSEB', 'TÜBİTAK 1001', 'TÜBİTAK 1002',
@@ -158,10 +162,15 @@ var SEMA = [
     aciklama: '2026’da yapılan başvurular',
     uyari: '01.01–31.12.2026 arasında yapılan patent, faydalı model ve tasarım başvurularını ekleyiniz.',
     sayfa: 'Patent', ilk: 9, son: 25, tarihSutun: 'I', sabit: { B: 'MMF' }, tekrar: 'E',
+    // Başvuru türü künyede ayrı sütun olmadığı için buluş adının sonuna "(Ulusal Patent)" gibi eklenir;
+    // çıktı sayıları (Ulusal/Uluslararası Patent, Faydalı Model) buradan hesaplanır.
+    sonEk: { sutun: 'E', alan: 'basvuruTuru' },
     alanlar: [
       { sutun: 'C', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'D', etiket: 'Başvuru Sahibi (Ad Soyad)', tip: 'ad', zorunlu: true },
-      { sutun: 'E', etiket: 'Buluşun Adı', tip: 'metin', zorunlu: true, ipucu: 'Faydalı model veya tasarım ise adın sonuna "(Faydalı Model)" / "(Tasarım)" ekleyiniz.' },
+      { sutun: null, anahtar: 'basvuruTuru', etiket: 'Başvuru Türü', tip: 'liste', zorunlu: true,
+        secenekler: ['Ulusal Patent', 'Uluslararası Patent', 'Faydalı Model', 'Tasarım'] },
+      { sutun: 'E', etiket: 'Buluşun Adı', tip: 'metin', zorunlu: true },
       { sutun: 'F', etiket: 'Başvuru Tarihi', tip: 'tarih', zorunlu: true, donem: true },
       { sutun: 'G', etiket: 'Sonuçlanma Tarihi', tip: 'tarih', ipucu: 'Henüz sonuçlanmadıysa boş bırakınız.' },
       { sutun: 'H', etiket: 'Durumu', tip: 'liste', zorunlu: true, secenekler: ['Olumlu', 'Olumsuz', 'Değerlendirmede'] }
@@ -214,16 +223,16 @@ var SEMA = [
   {
     anahtar: 'editorluk', baslik: 'Editörlük ve Hakemlik', simge: '📝',
     aciklama: '2026’daki kitap editörlüğü ve dergi hakemliği sayıları',
-    uyari: '2026 içinde editörlüğünü yaptığınız kitap sayısını ve hakemlik yaptığınız farklı dergi sayısını giriniz. Her öğretim elemanı bu formu bir kez doldurur.',
-    sayfa: 'Editörlük ve hakemlik', ilk: 8, son: 27, tarihSutun: 'G',
-    enAzBiri: ['D', 'F'], ozet: ['D', 'F'], ozetEtiket: { D: 'Editörlük (kitap)', F: 'Hakemlik (dergi)' },
+    uyari: '2026 içinde editörlüğünü yaptığınız kitap sayısını ve hakemlik yaptığınız farklı dergi sayısını giriniz. Yoksa 0 yazınız. Her öğretim elemanının tek satırı vardır; tekrar kaydederseniz satırınız güncellenir.',
+    sayfa: 'Editörlük ve hakemlik', ilk: 8, son: 27, tarihSutun: 'G', kisiBasinaTek: true,
+    ozet: ['D', 'F'], ozetEtiket: { D: 'Editörlük (kitap)', F: 'Hakemlik (dergi)' },
     alanlar: [
       { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: null, anahtar: 'adSoyad', etiket: 'Öğretim Elemanı', tip: 'ad', zorunlu: true },
-      { sutun: 'D', etiket: 'Editörlüğünü Yaptığınız Kitap Sayısı', tip: 'sayi', ornek: '1', ipucu: 'Editör veya bölüm editörü olduğunuz kitaplar.' },
-      { sutun: 'F', etiket: 'Hakemlik Yaptığınız Dergi Sayısı', tip: 'sayi', ornek: '4', ipucu: 'Makale sayısı değil, farklı dergi sayısı.' }
+      { sutun: 'D', etiket: 'Editörlüğünü Yaptığınız Kitap Sayısı', tip: 'sayi', zorunlu: true, ornek: '0', ipucu: 'Editör veya bölüm editörü olduğunuz kitaplar. Yoksa 0.' },
+      { sutun: 'F', etiket: 'Hakemlik Yaptığınız Dergi Sayısı', tip: 'sayi', zorunlu: true, ornek: '0', ipucu: 'Makale sayısı değil, farklı dergi sayısı. Yoksa 0.' }
     ],
-    // Ad, yalnızca ilgili sayı girildiyse "Editörlük Yapan" (C) / "Hakemlik Yapan" (E) sütununa yazılır.
+    // Ad, yalnızca ilgili sayı 0'dan büyükse "Editörlük Yapan" (C) / "Hakemlik Yapan" (E) sütununa yazılır.
     kosulluAd: { C: 'D', E: 'F' }
   },
   {
@@ -286,7 +295,7 @@ function baglantiGoster() {
 
 function sayfaOlustur_() {
   var t = HtmlService.createTemplateFromFile('Form');
-  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER, kadro: KADRO, rapor: RAPOR });
+  t.semaJson = JSON.stringify({ sema: SEMA, bolumler: BOLUMLER, kadro: KADRO, rapor: RAPOR, cikti: CIKTI.gruplar });
   return t.evaluate();
 }
 
@@ -298,12 +307,16 @@ function sayfaOlustur_() {
  * Formdan gelen kaydı ilgili sayfaya yazar.
  * @param {string} anahtar  Şemadaki kategori anahtarı
  * @param {Object} veri     {sutunHarfi | alanAnahtari: değer}
- * @param {boolean} zorla   Mükerrer uyarısına rağmen kaydet
  * @return {Object} {durum: 'tamam'|'tekrar', sayfa, satir}
  */
-function kaydet(anahtar, veri, zorla) {
+function kaydet(anahtar, veri) {
   var s = semaBul_(anahtar);
   dogrula_(s, veri);
+  if (s.sonEk && veri[s.sonEk.alan] && veri[s.sonEk.sutun]) {
+    var ek = ' (' + veri[s.sonEk.alan] + ')';
+    var metin = String(veri[s.sonEk.sutun]).trim();
+    if (metin.slice(-ek.length) !== ek) veri[s.sonEk.sutun] = metin + ek;
+  }
 
   var kilit = LockService.getScriptLock();
   kilit.waitLock(30000);
@@ -319,20 +332,45 @@ function kaydet(anahtar, veri, zorla) {
     var son = ilk + aralik.getNumRows() - 1;
     var girdiSutunlari = girdiSutunlari_(s);
 
-    // Mükerrer kontrolü
-    if (s.tekrar && !zorla && veri[s.tekrar]) {
-      var sutunNo = sutunNo_(s.tekrar);
-      var degerler = sh.getRange(ilk, sutunNo, son - ilk + 1, 1).getDisplayValues();
-      var aranan = normalize_(veri[s.tekrar]);
-      for (var i = 0; i < degerler.length; i++) {
-        if (normalize_(degerler[i][0]) === aranan) {
-          return { durum: 'tekrar', sayfa: s.sayfa, satir: ilk + i };
+    var gonderen = gonderenAdi_(s, veri);
+
+    // Mükerrer kontrolü: aynı kayıt ikinci kez girilemez. Ortak yazar / araştırmacı girmeye
+    // çalışırsa yeni satır açılmaz, adı mevcut satırın ortak sütununa eklenir.
+    if (s.tekrar && veri[s.tekrar]) {
+      var es = tekrarBul_(sh, s, ilk, son, veri[s.tekrar]);
+      if (es) {
+        var sonucT = { durum: 'tekrar', sayfa: s.sayfa, satir: es.satir, giren: es.giren };
+        if (s.ortakSutun && gonderen) {
+          var ka = kisiAnahtar_(gonderen);
+          if (es.giren && katla_(es.giren) === ka.tam) {
+            sonucT.durum = 'zatenSizin';
+          } else if (iliskili_(es.ortak, ka)) {
+            sonucT.durum = 'zatenOrtak';
+          } else {
+            var h = sh.getRange(es.satir, sutunNo_(s.ortakSutun));
+            var yeni = s.ortakSutun === 'J' ? apaAd_(gonderen) : gonderen;
+            h.setValue(es.ortak ? String(es.ortak).replace(/[;\s]+$/, '') + (s.ortakSutun === 'J' ? '; ' : '\n') + yeni : yeni);
+            SpreadsheetApp.flush();
+            sonucT.durum = 'ortakEklendi';
+          }
         }
+        return sonucT;
+      }
+    }
+
+    // Kişi başına tek satır (editörlük/hakemlik): varsa güncelle, sayılar 0 ise satırı boşalt
+    var mevcutSatir = s.kisiBasinaTek && gonderen ? kisiSatiri_(sh, s, ilk, son, gonderen) : -1;
+    if (s.kisiBasinaTek) {
+      var hepsiSifir = s.alanlar.every(function (a) { return a.tip !== 'sayi' || !(Number(veri[a.sutun]) > 0); });
+      if (mevcutSatir !== -1) satirTemizle_(sh, s, mevcutSatir);
+      if (hepsiSifir) {
+        SpreadsheetApp.flush();
+        return { durum: 'sifir', sayfa: s.sayfa, satir: mevcutSatir === -1 ? null : mevcutSatir };
       }
     }
 
     // İlk boş satırı bul
-    var satir = ilkBosSatir_(sh, ilk, son, girdiSutunlari);
+    var satir = mevcutSatir !== -1 ? mevcutSatir : ilkBosSatir_(sh, ilk, son, girdiSutunlari);
     if (satir === -1) {
       sh.insertRowsAfter(son, 1);
       var genislik = sh.getMaxColumns();
@@ -350,12 +388,13 @@ function kaydet(anahtar, veri, zorla) {
       if (!a.sutun) return;
       if (a.goster && veri[a.goster.sutun] !== a.goster.deger) return;
       var v = degerDonustur_(a, veri[a.sutun]);
+      if (s.kisiBasinaTek && a.tip === 'sayi' && !(v > 0)) return; // 0 olan sayı künyeye yazılmaz
       if (v !== '') yazilacak[a.sutun] = { deger: v, alan: a };
     });
     if (s.kosulluAd) {
       Object.keys(s.kosulluAd).forEach(function (hedefSutun) {
         var kosul = veri[s.kosulluAd[hedefSutun]];
-        if (kosul !== undefined && kosul !== null && String(kosul).trim() !== '') {
+        if (Number(kosul) > 0) {
           yazilacak[hedefSutun] = { deger: String(veri.adSoyad).trim(), alan: { tip: 'metin' } };
         }
       });
@@ -384,46 +423,138 @@ function kaydet(anahtar, veri, zorla) {
       (eposta ? '\n' + eposta : ''));
 
     SpreadsheetApp.flush();
-    return { durum: 'tamam', sayfa: s.sayfa, satir: satir };
+    return { durum: mevcutSatir !== -1 ? 'guncellendi' : 'tamam', sayfa: s.sayfa, satir: satir };
   } finally {
     kilit.releaseLock();
   }
 }
 
 /**
- * Verilen ada ait kayıtları listeler ("Girdiğim kayıtlar" sekmesi).
+ * Seçilen kişinin tablodaki kayıtları (kendi girdikleri + ortak yazar/araştırmacı olarak
+ * adının geçtikleri). Kişiye bağlı olmayan sayfalarda (bilimsel toplantı) bölümün tüm kayıtları döner.
+ * @return {Object} { anahtar: [{satir, ozet, rol: 'sahip'|'ortak'|'bolum', giren, tarih, degerler}] }
  */
-function kayitlarim(adSoyad) {
-  var aranan = normalize_(adSoyad);
-  if (!aranan) return [];
+function kisiKayitlari(ad) {
+  var ka = kisiAnahtar_(ad);
+  if (!ka.tam) return {};
   var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
-  var sonuc = [];
+  var sonuc = {};
   SEMA.forEach(function (s) {
+    sonuc[s.anahtar] = [];
     var sh = ss.getSheetByName(s.sayfa);
     if (!sh) return;
     var aralik = tabloAraligi_(ss, sh, s);
-    var ilk = aralik.getRow();
-    var adet = aralik.getNumRows();
-    var adSutunlari = s.alanlar.filter(function (a) { return a.tip === 'ad' && a.sutun; }).map(function (a) { return a.sutun; });
-    if (s.kosulluAd) adSutunlari = adSutunlari.concat(Object.keys(s.kosulluAd));
-    var ozetSutunlari = s.ozet || [s.tekrar || s.alanlar.filter(function (a) { return a.sutun && a.tip !== 'ad' && a.tip !== 'bolum'; })[0].sutun];
-    var sonSutun = sutunNo_(s.tarihSutun); // "Veri Giriş Tarihi" her tabloda en sağdaki sütundur
-    var veriler = sh.getRange(ilk, 1, adet, sonSutun).getDisplayValues();
+    var ilk = aralik.getRow(), adet = aralik.getNumRows();
+    var veriler = sh.getRange(ilk, 1, adet, sutunNo_(s.tarihSutun)).getDisplayValues();
+    var sahipSut = sahipSutunlari_(s);
+    var girdi = girdiSutunlari_(s);
+    var ozetSut = s.ozet || [s.tekrar || s.alanlar.filter(function (a) { return a.sutun && a.tip !== 'ad' && a.tip !== 'bolum'; })[0].sutun];
     veriler.forEach(function (r, i) {
-      var eslesti = adSutunlari.some(function (c) { return normalize_(r[sutunNo_(c) - 1]).indexOf(aranan) !== -1; });
-      if (eslesti) {
-        sonuc.push({
-          kategori: s.baslik, simge: s.simge, satir: ilk + i, sayfa: s.sayfa,
-          ozet: ozetSutunlari.map(function (c) {
-            var v = r[sutunNo_(c) - 1];
-            return v && s.ozetEtiket ? s.ozetEtiket[c] + ': ' + v : v;
-          }).filter(String).join(' · '),
-          tarih: r[sutunNo_(s.tarihSutun) - 1]
-        });
+      var hucre = function (c) { return r[sutunNo_(c) - 1]; };
+      if (girdi.every(function (c) { return !hucre(c); })) return; // boş satır
+      var giren = sahipSut.map(hucre).filter(Boolean)[0] || '';
+      var rol = null;
+      if (!sahipSut.length) rol = 'bolum';
+      else if (sahipSut.some(function (c) { return katla_(hucre(c)) === ka.tam; })) rol = 'sahip';
+      else if (s.ortakSutun && iliskili_(hucre(s.ortakSutun), ka)) rol = 'ortak';
+      if (!rol) return;
+      var kayit = {
+        satir: ilk + i, rol: rol, giren: giren, tarih: hucre(s.tarihSutun),
+        ozet: ozetSut.map(function (c) {
+          var v = hucre(c);
+          return v && s.ozetEtiket ? s.ozetEtiket[c] + ': ' + v : v;
+        }).filter(String).join(' · ')
+      };
+      if (s.kisiBasinaTek) {
+        kayit.degerler = {};
+        s.alanlar.forEach(function (a) { if (a.sutun) kayit.degerler[a.sutun] = hucre(a.sutun); });
       }
+      sonuc[s.anahtar].push(kayit);
     });
   });
   return sonuc;
+}
+
+/** Kişi adından karşılaştırma anahtarları: tam ad ve APA biçimi ("akdag i"). */
+function kisiAnahtar_(ad) {
+  var tam = katla_(ad);
+  var t = tam.split(' ').filter(Boolean);
+  return { tam: tam, apa: t.length > 1 ? t[t.length - 1] + ' ' + t[0].charAt(0) : tam };
+}
+
+/** Metinde (ortak yazar listesi vb.) kişinin tam adı ya da "Soyad, A." biçimi geçiyor mu? */
+function iliskili_(metin, ka) {
+  if (!metin || !ka.tam) return false;
+  var m = ' ' + katla_(metin) + ' ';
+  return m.indexOf(' ' + ka.tam + ' ') !== -1 || m.indexOf(' ' + ka.apa + ' ') !== -1;
+}
+
+function sahipSutunlari_(s) {
+  var c = s.alanlar.filter(function (a) { return a.tip === 'ad' && a.sutun; }).map(function (a) { return a.sutun; });
+  if (s.kosulluAd) c = c.concat(Object.keys(s.kosulluAd));
+  return c;
+}
+
+function gonderenAdi_(s, veri) {
+  var a = s.alanlar.filter(function (x) { return x.tip === 'ad'; })[0];
+  return a ? String(veri[a.sutun || a.anahtar] || '').trim() : '';
+}
+
+/**
+ * Künyeden karşılaştırma imzası: DOI ve APA künyesindeki başlık ("(2026). Başlık.").
+ */
+function kunyeImza_(metin) {
+  metin = String(metin || '');
+  var doi = (/10\.\d{4,9}\/[^\s,;]+/i.exec(metin) || [''])[0].replace(/[.)]+$/, '').toLowerCase();
+  var m = /\((?:\d{4}[a-z]?|t\.y\.|n\.d\.)\)\.\s*(.+?)(?:[.?!]\s|$)/i.exec(metin);
+  return { doi: doi, baslik: m ? katla_(m[1]) : '', tum: katla_(metin) };
+}
+
+/** Aynı kaydı arar. Yayında DOI/başlık, diğerlerinde anahtar sütunun birebir eşleşmesi. */
+function tekrarBul_(sh, s, ilk, son, deger) {
+  var n = son - ilk + 1;
+  var anahtarlar = sh.getRange(ilk, sutunNo_(s.tekrar), n, 1).getDisplayValues();
+  var sahip = sahipSutunlari_(s)[0];
+  var sahipler = sahip ? sh.getRange(ilk, sutunNo_(sahip), n, 1).getDisplayValues() : null;
+  var ortaklar = s.ortakSutun ? sh.getRange(ilk, sutunNo_(s.ortakSutun), n, 1).getDisplayValues() : null;
+  var yeni = s.anahtar === 'yayin' ? kunyeImza_(deger) : null;
+  var yeniN = normalize_(deger);
+  for (var i = 0; i < n; i++) {
+    var v = anahtarlar[i][0];
+    if (!v) continue;
+    var esit;
+    if (yeni) {
+      var e = kunyeImza_(v);
+      esit = (yeni.doi && yeni.doi === e.doi) ||
+        (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
+        yeni.tum === e.tum ||
+        (yeni.baslik.length >= 20 && e.tum.indexOf(yeni.baslik) !== -1) ||
+        (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1);
+    } else {
+      esit = normalize_(v) === yeniN;
+    }
+    if (esit) {
+      return { satir: ilk + i, giren: sahipler ? sahipler[i][0] : '', ortak: ortaklar ? ortaklar[i][0] : '' };
+    }
+  }
+  return null;
+}
+
+function kisiSatiri_(sh, s, ilk, son, ad) {
+  var k = katla_(ad);
+  var sut = sahipSutunlari_(s);
+  var v = sh.getRange(ilk, 1, son - ilk + 1, Math.max.apply(null, sut.map(sutunNo_))).getDisplayValues();
+  for (var i = 0; i < v.length; i++) {
+    if (sut.some(function (c) { return katla_(v[i][sutunNo_(c) - 1]) === k; })) return ilk + i;
+  }
+  return -1;
+}
+
+function satirTemizle_(sh, s, satir) {
+  girdiSutunlari_(s).concat([s.tarihSutun]).forEach(function (c) {
+    var h = sh.getRange(satir, sutunNo_(c));
+    h.clearContent(); h.clearNote();
+  });
 }
 
 // ---------------------------------------------------------------------------

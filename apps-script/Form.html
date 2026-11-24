@@ -105,6 +105,39 @@
   .rozet.ok { background: var(--ok-soft); color: var(--ok); }
   .ayrac { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin-top: 16px; }
   .ayrac::before, .ayrac::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+  .kisi-cubuk { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+  .kisi-cubuk .linkbtn { margin: 0; }
+  .kisi-cubuk .bolum { color: var(--muted); font-size: 13.5px; }
+  .adimlar { display: flex; gap: 6px; overflow-x: auto; padding: 12px 2px 4px; scrollbar-width: thin; }
+  .adim { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+    border-radius: 999px; padding: 5px 12px 5px 5px; font: inherit; font-size: 13px; cursor: pointer; }
+  .adim .no { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 999px; background: var(--bg); font-weight: 700; font-size: 12px; }
+  .adim.var .no { background: var(--ok-soft); color: var(--ok); }
+  .adim.yok .no { background: var(--accent-soft); color: var(--accent); }
+  .adim.aktif { border-color: var(--accent); color: var(--text); font-weight: 600; }
+  .adim:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .adim-no { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .kayitlar { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+  .kayitlar h3 { margin: 0 0 8px; font-size: 14.5px; }
+  .kayit { padding: 8px 0; border-top: 1px solid var(--line); }
+  .kayitlar h3 + .kayit { border-top: 0; }
+  .kayit .kunye { font-size: 14px; overflow-wrap: anywhere; }
+  .kayit .meta { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  .rozet.bilgi { background: var(--accent-soft); color: var(--accent); }
+  details.yeni { margin-top: 14px; }
+  details.yeni > summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 8px 0; }
+  .gezinme { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); }
+  fieldset.grup { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px 6px; margin: 14px 0 0; min-width: 0; }
+  fieldset.grup legend { font-weight: 700; padding: 0 6px; }
+  .cikti-satir { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: 4px 12px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  legend + .cikti-satir, .kaynak + .cikti-satir { border-top: 0; }
+  .cikti-satir label { font-weight: 400; margin: 0; }
+  .cikti-satir input { text-align: right; font-variant-numeric: tabular-nums; }
+  .cikti-satir .ipucu { grid-column: 1 / -1; margin: 0; }
+  .cikti-satir.hata-alan input { border-color: var(--err); background: var(--err-soft); }
+  .kaynak { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 8px 10px; margin: 4px 0 8px; }
+  .kaynak ul { margin: 4px 0 6px; padding-left: 18px; }
+  td.eksik { color: var(--warn); font-weight: 600; }
   @media (max-width: 640px) {
     .profil, .alanlar { grid-template-columns: 1fr; }
     .izgara { grid-template-columns: 1fr 1fr; }
@@ -116,14 +149,16 @@
 <body>
 <div class="kap">
   <header>
-    <h1>BAK 2026 Çıktı Künye – Veri Girişi</h1>
-    <p>Bölümümüz öğretim elemanlarının <b>01.01–31.12.2026</b> dönemindeki akademik faaliyet künyeleri bu formla toplanır ve 2026 Birim Faaliyet Raporu’na girer. Adınızı seçin, faaliyet türünü seçin, formu doldurup “Kaydet”e basın.</p>
+    <h1>BAK 2026 Birim Faaliyet Raporu – Veri Girişi</h1>
+    <p>Elektrik-Elektronik Mühendisliği öğretim elemanlarının <b>01.01–31.12.2026</b> dönemindeki faaliyetleri bu formla iki dosyaya kaydedilir:
+      <b>EEE_BAK_2026_CiktiKunye</b> (faaliyet künyeleri) ve <b>EEE_2026_Ciktilar</b> (öğretim elemanı bazlı çıktı sayıları).
+      Adınızı seçin ve adımları sırayla tamamlayın. Kaydınız olmayan kalemde “kaydım yok (0)” deyip geçin; her kalem için yanıt bekleniyor.</p>
     <div class="songun" id="songun"></div>
     <div class="demo" id="demo" hidden>Önizleme modu: Bu sayfa tabloya bağlı değil, girdiğiniz veriler kaydedilmez.</div>
   </header>
 
-  <section class="panel" aria-labelledby="profilBaslik">
-    <h2 id="profilBaslik">Bilgileriniz <span class="ipucu" style="font-weight:400">(bir kez girmeniz yeterli, tarayıcınız hatırlar)</span></h2>
+  <section class="panel" id="kimlik" aria-labelledby="profilBaslik">
+    <h2 id="profilBaslik">Kimsiniz?</h2>
     <div class="profil">
       <div class="genis-profil">
         <label for="pKisi">Adınızı seçin</label>
@@ -133,12 +168,15 @@
       <div id="pAdKutu"><label for="pAd">Ad Soyad</label><input id="pAd" autocomplete="name" placeholder="Örn. Ayşe Yılmaz"></div>
       <div id="pBolumKutu"><label for="pBolum">Bölüm / Alt Birim</label><select id="pBolum"></select></div>
     </div>
+    <div class="mesaj hata" id="kimlikUyari" hidden>Önce adınızı seçiniz (listede yoksanız “Listede yokum” seçip adınızı ve bölümünüzü yazınız).</div>
+    <div class="butonlar"><button class="btn ana" type="button" id="baslaBtn">Başla →</button></div>
   </section>
 
-  <nav class="sekmeler" role="tablist">
-    <button class="sekme" role="tab" id="sYeni" aria-selected="true">Yeni Kayıt</button>
-    <button class="sekme" role="tab" id="sKayit" aria-selected="false">Girdiğim Kayıtlar</button>
-  </nav>
+  <div class="kisi-cubuk" id="kisiCubuk" hidden>
+    <span aria-hidden="true">👤</span><b id="kisiAdi"></b><span class="bolum" id="kisiBolum"></span>
+    <button class="linkbtn" type="button" id="kisiDegistir">Kişiyi değiştir</button>
+  </div>
+  <nav class="adimlar" id="adimlar" aria-label="Adımlar" hidden></nav>
 
   <main id="icerik"></main>
 </div>
@@ -167,32 +205,64 @@ function sunucu(fn, args, ok, hata) {
     return;
   }
   setTimeout(function () {
+    var ad = $('pAd').value.trim();
     if (fn === 'kaydet') {
-      var s = semaBul(args[0]);
-      var anahtar = s.tekrar && args[1][s.tekrar];
-      var var_ = anahtar && demoKayitlar.filter(function (k) { return k.a === s.anahtar && k.t === anahtar.toLowerCase(); })[0];
-      if (var_ && !args[2]) return ok({ durum: 'tekrar', sayfa: s.sayfa, satir: var_.satir });
+      var s = semaBul(args[0]), v = args[1];
+      var anahtar = s.tekrar && v[s.tekrar];
+      var es = anahtar && demoKayitlar.filter(function (k) { return k.a === s.anahtar && katla(k.t) === katla(anahtar); })[0];
+      if (es) {
+        if (katla(es.giren) === katla(ad)) return ok({ durum: 'zatenSizin', sayfa: s.sayfa, satir: es.satir, giren: es.giren });
+        if (es.ortaklar.indexOf(katla(ad)) !== -1) return ok({ durum: 'zatenOrtak', sayfa: s.sayfa, satir: es.satir, giren: es.giren });
+        if (s.ortakSutun) { es.ortaklar.push(katla(ad)); return ok({ durum: 'ortakEklendi', sayfa: s.sayfa, satir: es.satir, giren: es.giren }); }
+        return ok({ durum: 'tekrar', sayfa: s.sayfa, satir: es.satir, giren: es.giren });
+      }
+      if (s.kisiBasinaTek) {
+        demoKayitlar = demoKayitlar.filter(function (k) { return !(k.a === s.anahtar && katla(k.giren) === katla(ad)); });
+        if (!(Number(v.D) > 0) && !(Number(v.F) > 0)) return ok({ durum: 'sifir', sayfa: s.sayfa });
+      }
       var satir = s.ilk + demoKayitlar.filter(function (k) { return k.sayfa === s.sayfa; }).length;
-      demoKayitlar.push({ a: s.anahtar, t: (anahtar || '').toLowerCase(), sayfa: s.sayfa, satir: satir, kategori: s.baslik,
-        simge: s.simge, ozet: args[1][s.tekrar || s.alanlar.filter(function (a) { return a.tip !== 'ad' && a.tip !== 'bolum'; })[0].sutun] || '',
-        tarih: new Date().toLocaleDateString('tr-TR') });
+      var ozetSut = s.ozet || [s.tekrar || s.alanlar.filter(function (a) { return a.sutun && a.tip !== 'ad' && a.tip !== 'bolum'; })[0].sutun];
+      demoKayitlar.push({ a: s.anahtar, t: anahtar || '', sayfa: s.sayfa, satir: satir, giren: ad, ortaklar: [], degerler: v,
+        ozet: ozetSut.map(function (c) { return v[c]; }).filter(Boolean).join(' · '), tarih: new Date().toLocaleDateString('tr-TR') });
       ok({ durum: 'tamam', sayfa: s.sayfa, satir: satir });
-    } else if (fn === 'kayitlarim') {
-      ok(demoKayitlar);
+    } else if (fn === 'kisiKayitlari') {
+      var r = {};
+      SEMA.forEach(function (s) { r[s.anahtar] = []; });
+      demoKayitlar.forEach(function (k) {
+        var s = semaBul(k.a);
+        var kisiye = s.alanlar.some(function (a) { return a.tip === 'ad'; });
+        var rol = !kisiye ? 'bolum' : katla(k.giren) === katla(ad) ? 'sahip' : k.ortaklar.indexOf(katla(ad)) !== -1 ? 'ortak' : null;
+        if (rol) r[k.a].push({ satir: k.satir, rol: rol, giren: k.giren, ozet: k.ozet, tarih: k.tarih, degerler: k.degerler });
+      });
+      ok(r);
     } else if (fn === 'yayinlariGetir' || fn === 'bibtexAktar') {
-      var ad = args[1] && fn === 'bibtexAktar' ? args[1] : args[0];
       ok({ yazarlar: [{ id: 'A0', ad: ad, yayin: 33 }], atlanan: 0, kayitlar: DEMO_YAYINLAR.map(function (k) {
-        var c = JSON.parse(JSON.stringify(k)); c.veri.E = ad; c.kaynak = fn === 'bibtexAktar' ? 'Scholar + OpenAlex' : 'OpenAlex'; return c;
+        var c = JSON.parse(JSON.stringify(k)); c.veri.E = ad; c.kaynak = fn === 'bibtexAktar' ? 'Scholar + OpenAlex' : 'OpenAlex';
+        var es = demoKayitlar.filter(function (x) { return x.a === 'yayin' && katla(x.t) === katla(c.veri.C); })[0];
+        c.mevcut = es ? { satir: es.satir, giren: es.giren, iliskili: katla(es.giren) === katla(ad) || es.ortaklar.indexOf(katla(ad)) !== -1 } : null;
+        return c;
       }) });
     } else if (fn === 'topluKaydet') {
       var sonuclar = [], kalan = args[1].slice();
       (function sonraki() {
         if (!kalan.length) return ok(sonuclar);
-        sunucu('kaydet', [args[0], kalan.shift(), true], function (r) { sonuclar.push(r); sonraki(); });
+        sunucu('kaydet', [args[0], kalan.shift()], function (r) { sonuclar.push(r); sonraki(); });
       })();
+    } else if (fn === 'ciktiGetir') {
+      var oto = {};
+      demoKayitlar.forEach(function (k) {
+        if (k.a !== 'yayin' || !(katla(k.giren) === katla(ad) || k.ortaklar.indexOf(katla(ad)) !== -1)) return;
+        var h = k.degerler.H, sat = k.degerler.B !== 'Makale' ? null : ['SCI', 'SCIE', 'SSCI', 'AHCI'].indexOf(h) !== -1 ? 9 : h === 'ESCI' ? 11 : h === 'TR Dizin' ? 12 : 13;
+        if (sat) oto[sat] = (oto[sat] || 0) + 1;
+      });
+      var kadrodan = KADRO.kisiler.some(function (k) { return katla(k.ad) === katla(ad); });
+      ok({ sutunVar: kadrodan, oto: oto, kayitli: demoCikti[katla(ad)] || {}, kaynaklar: { bap: [], proje: [], burs: [], toplanti: [] } });
+    } else if (fn === 'ciktiKaydet') {
+      demoCikti[katla(ad)] = args[1]; ok({ durum: 'tamam' });
     }
-  }, 500);
+  }, 300);
 }
+var demoCikti = {};
 
 var DEMO_YAYINLAR = [
   { baslik: 'Sim2Real-enhanced antenna characterization: a robust radiation pattern reconstruction method via passive RFID tag array',
@@ -221,6 +291,11 @@ function el(tag, attrs, kids) {
   });
   (kids || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
   return e;
+}
+function katla(t) {
+  var tablo = { 'ı': 'i', 'İ': 'i', 'ş': 's', 'Ş': 's', 'ğ': 'g', 'Ğ': 'g', 'ü': 'u', 'Ü': 'u', 'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c' };
+  return String(t || '').replace(/[ıİşŞğĞüÜöÖçÇ]/g, function (c) { return tablo[c]; })
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 function semaBul(a) { return SEMA.filter(function (s) { return s.anahtar === a; })[0]; }
 function sakla(k, v) { try { localStorage.setItem('bak_' + k, v); } catch (e) {} }
@@ -278,105 +353,17 @@ $('pKisi').addEventListener('change', function () {
   sakla('kisi', this.value);
   profilUygula();
   sakla('ad', $('pAd').value.trim()); sakla('bolum', $('pBolum').value);
-  if ($('sYeni').getAttribute('aria-selected') === 'true') kategoriler(); else kayitlarim();
+  $('kimlikUyari').hidden = true;
 });
 $('pAd').addEventListener('input', function () { sakla('ad', this.value.trim()); });
 $('pBolum').addEventListener('change', function () { sakla('bolum', this.value); });
 if (DEMO) $('demo').hidden = false;
 
-// ---- Sekmeler ----
-function sekmeSec(id) {
-  ['sYeni', 'sKayit'].forEach(function (s) { $(s).setAttribute('aria-selected', s === id ? 'true' : 'false'); });
-  if (id === 'sYeni') kategoriler(); else kayitlarim();
-}
-$('sYeni').onclick = function () { sekmeSec('sYeni'); };
-$('sKayit').onclick = function () { sekmeSec('sKayit'); };
-
-// ---- Kategori ızgarası ----
-function kategoriler() {
-  var ic = $('icerik'); ic.innerHTML = '';
-  var p = el('section', { class: 'panel' }, [el('h2', { text: 'Ne eklemek istiyorsunuz?' }),
-    el('div', { class: 'mesaj hata', id: 'kimlikUyari', hidden: true, text: 'Önce yukarıdan adınızı seçiniz (listede yoksanız “Listede yokum” seçip adınızı ve bölümünüzü yazınız).' })]);
-  var g = el('div', { class: 'izgara' });
-  SEMA.forEach(function (s) {
-    g.appendChild(el('button', { class: 'kart', onclick: function () { formAc(s.anahtar); } }, [
-      el('span', { class: 's', text: s.simge }), el('b', { text: s.baslik }), el('span', { class: 'a', text: s.aciklama })
-    ]));
-  });
-  p.appendChild(g); ic.appendChild(p);
-}
-
-// ---- Form ----
-function kimlikTamam() {
-  if ($('pKisi').value === '') { $('pKisi').focus(); return false; }
-  if ($('pKisi').value === DIGER && (!$('pAd').value.trim() || !$('pBolum').value)) {
-    ($('pAd').value.trim() ? $('pBolum') : $('pAd')).focus(); return false;
-  }
-  return true;
-}
-
-function formAc(anahtar, mesaj) {
-  if (!kimlikTamam()) {
-    var u = $('kimlikUyari');
-    if (u) u.hidden = false;
-    return;
-  }
-  var s = semaBul(anahtar);
-  var ic = $('icerik'); ic.innerHTML = '';
-  var p = el('section', { class: 'panel' });
-  p.appendChild(el('button', { class: 'geri', text: '← Tüm kategoriler', onclick: kategoriler }));
-  p.appendChild(el('div', { class: 'form-baslik' }, [el('span', { class: 's', text: s.simge }), el('h2', { text: s.baslik })]));
-  if (s.uyari) p.appendChild(el('div', { class: 'uyari', text: '⚠ ' + s.uyari }));
-  if (s.enAzBiri) p.appendChild(el('div', { class: 'ipucu', text: 'Sayı alanlarından en az birini doldurunuz.' }));
-
-  var form = el('form', { novalidate: true });
-  var izgara = el('div', { class: 'alanlar' });
-  s.alanlar.forEach(function (a) { izgara.appendChild(alanOlustur(a)); });
-  form.appendChild(izgara);
-
-  var mesajKutu = el('div', { 'aria-live': 'polite' });
-  var kaydetBtn = el('button', { class: 'btn ana', type: 'submit', text: 'Kaydet' });
-  form.appendChild(el('div', { class: 'butonlar' }, [
-    kaydetBtn,
-    el('button', { class: 'btn', type: 'button', text: 'Formu temizle', onclick: function () { formAc(anahtar); } })
-  ]));
-  form.appendChild(mesajKutu);
-
-  // Koşullu alanlar
-  function kosullariUygula() {
-    s.alanlar.forEach(function (a) {
-      if (!a.goster) return;
-      var kutu = form.querySelector('[data-alan="' + a.sutun + '"]');
-      var kaynak = form.querySelector('[name="' + a.goster.sutun + '"]');
-      kutu.hidden = !(kaynak && kaynak.value === a.goster.deger);
-    });
-  }
-  form.addEventListener('change', kosullariUygula);
-  kosullariUygula();
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var sonuc = topla(s, form);
-    mesajKutu.innerHTML = '';
-    if (sonuc.hatalar.length) {
-      mesajKutu.appendChild(el('div', { class: 'mesaj hata', text: sonuc.hatalar.join(' ') }));
-      var ilkHata = form.querySelector('.hata-alan input, .hata-alan select, .hata-alan textarea');
-      if (ilkHata) ilkHata.focus();
-      return;
-    }
-    gonder(s, sonuc.veri, false, kaydetBtn, mesajKutu);
-  });
-
-  if (s.iceAktar) {
-    p.appendChild(iceAktarPanel(s, form));
-    p.appendChild(el('div', { class: 'ayrac', text: 'veya elle girin' }));
-  }
-  p.appendChild(form);
-  ic.appendChild(p);
-  if (mesaj) mesajKutu.appendChild(mesaj);
-  var ilk = form.querySelector('input:not([readonly]), select, textarea');
-  if (ilk && !mesaj) ilk.focus();
-}
+$('baslaBtn').onclick = basla;
+$('kisiDegistir').onclick = function () {
+  $('kimlik').hidden = false; $('kisiCubuk').hidden = true; $('adimlar').hidden = true; $('icerik').innerHTML = '';
+  $('pKisi').focus();
+};
 
 function alanOlustur(a) {
   var ad = a.sutun || a.anahtar;
@@ -467,39 +454,8 @@ function topla(s, form) {
   return { veri: veri, hatalar: hatalar };
 }
 
-function gonder(s, veri, zorla, btn, mesajKutu) {
-  btn.disabled = true; btn.textContent = 'Kaydediliyor…';
-  sunucu('kaydet', [s.anahtar, veri, zorla], function (r) {
-    btn.disabled = false; btn.textContent = 'Kaydet';
-    mesajKutu.innerHTML = '';
-    if (r.durum === 'tekrar') {
-      mesajKutu.appendChild(el('div', { class: 'mesaj tekrar' }, [
-        el('div', { text: 'Bu başlıkla bir kayıt zaten var (“' + r.sayfa + '” sayfası, ' + r.satir + '. satır). Aynı kaydı iki kez girmiş olabilirsiniz.' }),
-        el('div', { class: 'butonlar' }, [
-          el('button', { class: 'btn', type: 'button', text: 'Yine de kaydet', onclick: function () { gonder(s, veri, true, btn, mesajKutu); } }),
-          el('button', { class: 'btn', type: 'button', text: 'Vazgeç', onclick: function () { mesajKutu.innerHTML = ''; } })
-        ])
-      ]));
-      return;
-    }
-    var ok = el('div', { class: 'mesaj ok' }, [
-      el('div', { html: '<b>✓ Kaydedildi.</b> “' + r.sayfa.replace(/</g, '&lt;') + '” sayfası, ' + r.satir + '. satır.' }),
-      el('div', { class: 'butonlar' }, [
-        el('button', { class: 'btn ana', type: 'button', text: 'Aynı türde yeni kayıt', onclick: function () { formAc(s.anahtar); } }),
-        el('button', { class: 'btn', type: 'button', text: 'Başka kategori', onclick: kategoriler })
-      ])
-    ]);
-    formAc(s.anahtar, ok);
-    $('icerik').scrollIntoView({ behavior: 'smooth' });
-  }, function (hata) {
-    btn.disabled = false; btn.textContent = 'Kaydet';
-    mesajKutu.innerHTML = '';
-    mesajKutu.appendChild(el('div', { class: 'mesaj hata', text: 'Kaydedilemedi: ' + hata }));
-  });
-}
-
 // ---- Yayınları otomatik getirme / Scholar'dan aktarma ----
-function iceAktarPanel(s, form) {
+function iceAktarPanel(s, form, yenile) {
   var buYil = RAPOR.yil;
   var alan = function (c) { return s.alanlar.filter(function (a) { return a.sutun === c; })[0]; };
   var kutu = el('div', { class: 'aktar' });
@@ -585,9 +541,12 @@ function iceAktarPanel(s, form) {
       var cbId = 'ysec' + i;
       var cb = el('input', { type: 'checkbox', id: cbId });
       cb.checked = !k.mevcut && !k.onbaski;
+      if (k.mevcut && k.mevcut.iliskili) cb.disabled = true;
+      if (k.mevcut && !k.mevcut.iliskili) cb.checked = true;
       cb.onchange = say;
       var rozetler = el('div', { class: 'meta' });
-      if (k.mevcut) rozetler.appendChild(el('span', { class: 'rozet', text: 'Tabloda zaten var' }));
+      if (k.mevcut && k.mevcut.iliskili) rozetler.appendChild(el('span', { class: 'rozet ok', text: 'Tabloda kayıtlı · satır ' + k.mevcut.satir + (katla(k.mevcut.giren) !== katla($('pAd').value) ? ' (' + k.mevcut.giren + ' girdi, ortak yazarsınız)' : '') }));
+      if (k.mevcut && !k.mevcut.iliskili) rozetler.appendChild(el('span', { class: 'rozet bilgi', text: (k.mevcut.giren || 'Başka biri') + ' girmiş · kaydedince ortak yazar olarak eklenirsiniz' }));
       if (k.onbaski) rozetler.appendChild(el('span', { class: 'rozet', text: 'Ön baskı / depo kaydı' }));
       rozetler.appendChild(document.createTextNode([k.veri.D, k.veri.M !== '' ? k.veri.M + ' atıf' : '', k.doi ? 'DOI: ' + k.doi : '', 'Kaynak: ' + k.kaynak].filter(Boolean).join(' · ')));
       var kart = el('div', { class: 'yayin' }, [
@@ -623,17 +582,20 @@ function iceAktarPanel(s, form) {
         var basarili = 0, hatalar = [];
         sonuclar.forEach(function (r, i) {
           var x = secilen[i];
-          if (r.durum === 'tamam') {
-            basarili++; x.cb.disabled = true; x.kart.classList.add('kayitli');
-            x.rozetler.insertBefore(el('span', { class: 'rozet ok', text: '✓ Kaydedildi · ' + r.satir + '. satır' }), x.rozetler.firstChild);
+          var etiket = { tamam: '✓ Kaydedildi', ortakEklendi: '✓ Ortak yazar olarak eklendi', zatenSizin: 'Zaten kayıtlı', zatenOrtak: 'Zaten kayıtlı (ortak)', tekrar: 'Zaten kayıtlı' }[r.durum];
+          if (etiket) {
+            if (r.durum === 'tamam' || r.durum === 'ortakEklendi') basarili++;
+            x.cb.checked = false; x.cb.disabled = true; x.kart.classList.add('kayitli');
+            x.rozetler.insertBefore(el('span', { class: 'rozet ok', text: etiket + ' · ' + r.satir + '. satır' }), x.rozetler.firstChild);
           } else {
             hatalar.push((i + 1) + '. yayın: ' + (r.mesaj || 'kaydedilemedi'));
           }
         });
         sonucMesaj.innerHTML = '';
-        if (basarili) sonucMesaj.appendChild(el('div', { class: 'mesaj ok', text: '✓ ' + basarili + ' yayın “Bilimsel yayın” sayfasına eklendi.' }));
+        if (basarili) sonucMesaj.appendChild(el('div', { class: 'mesaj ok', text: '✓ ' + basarili + ' yayın kaydedildi. Yukarıdaki listeye eklendi.' }));
         if (hatalar.length) sonucMesaj.appendChild(el('div', { class: 'mesaj hata', text: hatalar.join(' ') }));
         say();
+        if (basarili && yenile) yenile();
       }, function (h) {
         say();
         sonucMesaj.innerHTML = '';
@@ -653,36 +615,385 @@ function formuDoldur(form, veri) {
   var ilk = form.elements.B; if (ilk) ilk.focus({ preventScroll: true });
 }
 
-// ---- Girdiğim kayıtlar ----
-function kayitlarim() {
-  var ic = $('icerik'); ic.innerHTML = '';
-  var p = el('section', { class: 'panel' }, [el('h2', { text: 'Girdiğim Kayıtlar' })]);
-  ic.appendChild(p);
-  var ad = $('pAd').value.trim();
-  if (!ad) { p.appendChild(el('p', { class: 'bos', text: 'Kayıtlarınızı görmek için yukarıya adınızı soyadınızı yazınız.' })); return; }
-  var yukleniyor = el('p', { class: 'bos', text: 'Yükleniyor…' });
-  p.appendChild(yukleniyor);
-  sunucu('kayitlarim', [ad], function (liste) {
-    yukleniyor.remove();
-    if (!liste.length) { p.appendChild(el('p', { class: 'bos', text: '“' + ad + '” adına kayıt bulunamadı.' })); return; }
-    var t = el('table', { class: 'liste' });
-    t.appendChild(el('thead', {}, [el('tr', {}, [
-      el('th', { text: 'Kategori' }), el('th', { text: 'Başlık / Özet' }),
-      el('th', { class: 'gizle-mobil', text: 'Satır' }), el('th', { class: 'gizle-mobil', text: 'Giriş tarihi' })
-    ])]));
-    var tb = el('tbody');
-    liste.forEach(function (k) {
-      tb.appendChild(el('tr', {}, [
-        el('td', { text: k.simge + ' ' + k.kategori }), el('td', { text: k.ozet }),
-        el('td', { class: 'gizle-mobil', text: k.satir }), el('td', { class: 'gizle-mobil', text: k.tarih })
-      ]));
-    });
-    t.appendChild(tb); p.appendChild(t);
-    p.appendChild(el('p', { class: 'ipucu', text: 'Düzeltme veya silme için bölüm sorumlusuna başvurunuz.' }));
-  }, function (h) { yukleniyor.textContent = 'Kayıtlar alınamadı: ' + h; });
+// ---- Adım adım veri girişi ----
+var ADIMLAR = SEMA.map(function (s) { return { tip: 'kategori', s: s, baslik: s.baslik, simge: s.simge }; })
+  .concat([{ tip: 'cikti', baslik: 'Çıktı Sayıları', simge: '📊' }, { tip: 'bitti', baslik: 'Özet', simge: '✅' }]);
+var D = { ad: '', kayitlar: null, yok: {}, eklenen: {}, adim: 0, ciktiKayitli: false };
+
+function kisiAnahtari() { return 'k_' + D.ad.toLocaleLowerCase('tr').replace(/\s+/g, '_'); }
+function durumSakla() {
+  sakla(kisiAnahtari(), JSON.stringify({ yok: D.yok, eklenen: D.eklenen, adim: D.adim, ciktiKayitli: D.ciktiKayitli }));
+}
+function durumOku() {
+  try { var d = JSON.parse(oku(kisiAnahtari()) || '{}'); D.yok = d.yok || {}; D.eklenen = d.eklenen || {}; D.adim = d.adim || 0; D.ciktiKayitli = !!d.ciktiKayitli; }
+  catch (e) { D.yok = {}; D.eklenen = {}; D.adim = 0; D.ciktiKayitli = false; }
 }
 
-kategoriler();
+function kimlikTamam() {
+  if ($('pKisi').value === '') { $('pKisi').focus(); return false; }
+  if ($('pKisi').value === DIGER && (!$('pAd').value.trim() || !$('pBolum').value)) {
+    ($('pAd').value.trim() ? $('pBolum') : $('pAd')).focus(); return false;
+  }
+  return true;
+}
+
+function basla() {
+  if (!kimlikTamam()) { $('kimlikUyari').hidden = false; return; }
+  $('kimlikUyari').hidden = true;
+  D.ad = $('pAd').value.trim();
+  durumOku();
+  $('kimlik').hidden = true;
+  $('kisiCubuk').hidden = false;
+  var k = KADRO.kisiler[Number($('pKisi').value)];
+  $('kisiAdi').textContent = (k ? k.unvan + ' ' : '') + D.ad;
+  $('kisiBolum').textContent = $('pBolum').value;
+  $('adimlar').hidden = false;
+  $('icerik').innerHTML = '';
+  $('icerik').appendChild(el('section', { class: 'panel' }, [el('p', { class: 'bos', text: 'Tablodaki kayıtlarınız yükleniyor…' })]));
+  kayitlariYukle(function () { adimGoster(Math.min(D.adim, ADIMLAR.length - 1)); }, function (h) {
+    $('icerik').innerHTML = '';
+    $('icerik').appendChild(el('div', { class: 'mesaj hata', text: 'Kayıtlar alınamadı: ' + h }));
+  });
+}
+
+function kayitlariYukle(ok, hata) {
+  sunucu('kisiKayitlari', [D.ad], function (r) { D.kayitlar = r || {}; ok && ok(); }, hata || function () {});
+}
+
+function kisiKayitSayisi(anahtar) {
+  return ((D.kayitlar && D.kayitlar[anahtar]) || []).filter(function (k) { return k.rol !== 'bolum'; }).length;
+}
+
+function adimDurumu(i) {
+  var a = ADIMLAR[i];
+  if (a.tip === 'kategori') {
+    if (kisiKayitSayisi(a.s.anahtar) > 0 || D.eklenen[a.s.anahtar] > 0) return 'var';
+    if (D.yok[a.s.anahtar]) return 'yok';
+    return 'bos';
+  }
+  if (a.tip === 'cikti') return D.ciktiKayitli ? 'var' : 'bos';
+  return 'bos';
+}
+
+function cizAdimlar() {
+  var n = $('adimlar'); n.innerHTML = '';
+  ADIMLAR.forEach(function (a, i) {
+    var d = adimDurumu(i);
+    var isaret = d === 'var' ? '✓' : d === 'yok' ? '0' : String(i + 1);
+    var b = el('button', { type: 'button', class: 'adim ' + d + (i === D.adim ? ' aktif' : ''), 'aria-current': i === D.adim ? 'step' : undefined,
+      title: a.baslik + (d === 'var' ? ' – girildi' : d === 'yok' ? ' – kayıt yok (0)' : ''), onclick: function () { adimGoster(i); } },
+      [el('span', { class: 'no', text: isaret }), el('span', { class: 'ad', text: a.baslik })]);
+    n.appendChild(b);
+  });
+  var akt = n.querySelector('.aktif'); if (akt && akt.scrollIntoView) akt.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+
+function adimGoster(i) {
+  D.adim = i; durumSakla(); cizAdimlar();
+  var a = ADIMLAR[i];
+  var ic = $('icerik'); ic.innerHTML = '';
+  if (a.tip === 'kategori') kategoriAdimi(a.s, i);
+  else if (a.tip === 'cikti') ciktiAdimi(i);
+  else ozetAdimi();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function adimBasligi(i) {
+  var a = ADIMLAR[i];
+  return el('div', { class: 'form-baslik' }, [
+    el('span', { class: 's', text: a.simge }),
+    el('div', {}, [el('div', { class: 'adim-no', text: 'Adım ' + (i + 1) + ' / ' + (ADIMLAR.length - 1) }), el('h2', { text: a.baslik })])
+  ]);
+}
+
+function rolMetni(k) {
+  if (k.rol === 'sahip') return 'Siz girdiniz';
+  if (k.rol === 'ortak') return (k.giren ? k.giren + ' girdi' : 'Başkası girdi') + ' · adınız ortak olarak kayıtlı';
+  return 'Bölüm kaydı' + (k.giren ? ' · ' + k.giren : '');
+}
+
+function kategoriAdimi(s, i) {
+  var p = el('section', { class: 'panel' });
+  p.appendChild(adimBasligi(i));
+  if (s.uyari) p.appendChild(el('div', { class: 'uyari', text: '⚠ ' + s.uyari }));
+
+  // Tablodaki kayıtlar
+  var kayitKutu = el('div', { class: 'kayitlar' });
+  function kayitlariCiz() {
+    kayitKutu.innerHTML = '';
+    var liste = (D.kayitlar && D.kayitlar[s.anahtar]) || [];
+    var benim = liste.filter(function (k) { return k.rol !== 'bolum'; });
+    var bolum = liste.filter(function (k) { return k.rol === 'bolum'; });
+    kayitKutu.appendChild(el('h3', { text: s.kisiBasinaTek ? 'Tablodaki satırınız' : 'Tabloda adınızın geçtiği kayıtlar (' + benim.length + ')' }));
+    if (!benim.length) kayitKutu.appendChild(el('p', { class: 'bos', text: 'Bu kalemde tabloda adınıza kayıt yok.' }));
+    benim.forEach(function (k) {
+      kayitKutu.appendChild(el('div', { class: 'kayit' }, [
+        el('div', { class: 'kunye', text: k.ozet || '(özet yok)' }),
+        el('div', { class: 'meta' }, [el('span', { class: 'rozet ' + (k.rol === 'sahip' ? 'ok' : 'bilgi'), text: rolMetni(k) }), document.createTextNode('Satır ' + k.satir + (k.tarih ? ' · ' + k.tarih : ''))])
+      ]));
+    });
+    if (bolum.length) {
+      kayitKutu.appendChild(el('h3', { text: 'Bölümün bu kalemdeki diğer kayıtları (' + bolum.length + ')', style: 'margin-top:12px' }));
+      kayitKutu.appendChild(el('div', { class: 'ipucu', text: 'Aynı etkinliği tekrar girmeyiniz.' }));
+      bolum.forEach(function (k) {
+        kayitKutu.appendChild(el('div', { class: 'kayit' }, [el('div', { class: 'kunye', text: k.ozet }), el('div', { class: 'meta', text: 'Satır ' + k.satir })]));
+      });
+    }
+    if (benim.length) kayitKutu.appendChild(el('div', { class: 'ipucu', text: 'Düzeltme veya silme gerekiyorsa bölüm BAK üyesine yazınız.' }));
+  }
+  kayitlariCiz();
+  p.appendChild(kayitKutu);
+
+  function yenile() { kayitlariYukle(function () { kayitlariCiz(); cizAdimlar(); navCiz(); }); }
+
+  // Yeni kayıt formu
+  var form = formOlustur(s, function (r) {
+    delete D.yok[s.anahtar];
+    if (r.durum === 'tamam' || r.durum === 'ortakEklendi' || r.durum === 'guncellendi') D.eklenen[s.anahtar] = (D.eklenen[s.anahtar] || 0) + 1;
+    if (r.durum === 'sifir') { D.yok[s.anahtar] = true; D.eklenen[s.anahtar] = 0; }
+    durumSakla(); yenile();
+    if (s.kisiBasinaTek) adimGoster(i + 1);
+  });
+
+  if (s.kisiBasinaTek) {
+    var mevcut = ((D.kayitlar && D.kayitlar[s.anahtar]) || []).filter(function (k) { return k.rol === 'sahip'; })[0];
+    ['D', 'F'].forEach(function (c) {
+      if (form.form.elements[c]) form.form.elements[c].value = mevcut && mevcut.degerler ? (mevcut.degerler[c] || '0') : (D.yok[s.anahtar] ? '0' : '');
+    });
+    form.kaydetBtn.textContent = 'Kaydet ve İleri →';
+    p.appendChild(form.kutu);
+  } else {
+    var ekle = el('details', { class: 'yeni', open: kisiKayitSayisi(s.anahtar) === 0 && !D.yok[s.anahtar] ? true : undefined }, [
+      el('summary', { text: '+ Yeni kayıt ekle' })
+    ]);
+    if (s.iceAktar) {
+      ekle.appendChild(iceAktarPanel(s, form.form, yenile));
+      ekle.appendChild(el('div', { class: 'ayrac', text: 'veya elle girin' }));
+    }
+    ekle.appendChild(form.kutu);
+    p.appendChild(ekle);
+  }
+
+  // Gezinme
+  var nav = el('div', { class: 'gezinme' });
+  var navMesaj = el('div', { 'aria-live': 'polite' });
+  function navCiz() {
+    nav.innerHTML = '';
+    nav.appendChild(el('button', { class: 'btn', type: 'button', text: '← Geri', disabled: i === 0 ? true : undefined, onclick: function () { adimGoster(i - 1); } }));
+    if (s.kisiBasinaTek) return;
+    var var_ = adimDurumu(i) === 'var';
+    nav.appendChild(el('button', {
+      class: 'btn ana', type: 'button', text: var_ ? 'İleri →' : 'Bu kalemde kaydım yok (0) · İleri →',
+      onclick: function () {
+        if (form.dolu()) {
+          navMesaj.innerHTML = '';
+          navMesaj.appendChild(el('div', { class: 'mesaj tekrar', text: 'Formda kaydedilmemiş bilgi var. Önce "Kaydet"e basın ya da "Formu temizle" deyin.' }));
+          form.kutu.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        if (!var_) { D.yok[s.anahtar] = true; durumSakla(); }
+        adimGoster(i + 1);
+      }
+    }));
+  }
+  navCiz();
+  p.appendChild(nav);
+  p.appendChild(navMesaj);
+  $('icerik').appendChild(p);
+}
+
+/** Tek kayıt formu (adım içinde). */
+function formOlustur(s, kaydedildi) {
+  var form = el('form', { novalidate: true });
+  var izgara = el('div', { class: 'alanlar' });
+  s.alanlar.forEach(function (a) { izgara.appendChild(alanOlustur(a)); });
+  form.appendChild(izgara);
+  var mesajKutu = el('div', { 'aria-live': 'polite' });
+  var kaydetBtn = el('button', { class: 'btn ana', type: 'submit', text: 'Kaydet' });
+  form.appendChild(el('div', { class: 'butonlar' }, [
+    kaydetBtn,
+    s.kisiBasinaTek ? null : el('button', { class: 'btn', type: 'button', text: 'Formu temizle', onclick: function () { temizle(); mesajKutu.innerHTML = ''; } })
+  ]));
+  form.appendChild(mesajKutu);
+
+  function kosullariUygula() {
+    s.alanlar.forEach(function (a) {
+      if (!a.goster) return;
+      var kutu = form.querySelector('[data-alan="' + a.sutun + '"]');
+      var kaynak = form.querySelector('[name="' + a.goster.sutun + '"]');
+      kutu.hidden = !(kaynak && kaynak.value === a.goster.deger);
+    });
+  }
+  function varsayilanlariSakla() {
+    Array.prototype.forEach.call(form.elements, function (g) { if (g.name) g.setAttribute('data-v', g.value); });
+  }
+  function temizle() {
+    Array.prototype.forEach.call(form.elements, function (g) { if (g.name) g.value = g.getAttribute('data-v') || ''; });
+    form.querySelectorAll('.hata-alan').forEach(function (k) { k.classList.remove('hata-alan'); });
+    kosullariUygula();
+  }
+  function dolu() {
+    return Array.prototype.some.call(form.elements, function (g) { return g.name && g.value !== (g.getAttribute('data-v') || ''); });
+  }
+  form.addEventListener('change', kosullariUygula);
+  kosullariUygula();
+  varsayilanlariSakla();
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var sonuc = topla(s, form);
+    mesajKutu.innerHTML = '';
+    if (sonuc.hatalar.length) {
+      mesajKutu.appendChild(el('div', { class: 'mesaj hata', text: sonuc.hatalar.join(' ') }));
+      var ilkHata = form.querySelector('.hata-alan input, .hata-alan select, .hata-alan textarea');
+      if (ilkHata) ilkHata.focus();
+      return;
+    }
+    kaydetBtn.disabled = true; var eski = kaydetBtn.textContent; kaydetBtn.textContent = 'Kaydediliyor…';
+    sunucu('kaydet', [s.anahtar, sonuc.veri], function (r) {
+      kaydetBtn.disabled = false; kaydetBtn.textContent = eski;
+      mesajKutu.innerHTML = '';
+      var m = sonucMesaji(r);
+      mesajKutu.appendChild(el('div', { class: 'mesaj ' + m.tur, text: m.metin }));
+      if (m.tur !== 'hata' && r.durum !== 'tekrar') temizle();
+      kaydedildi && kaydedildi(r);
+    }, function (h) {
+      kaydetBtn.disabled = false; kaydetBtn.textContent = eski;
+      mesajKutu.innerHTML = '';
+      mesajKutu.appendChild(el('div', { class: 'mesaj hata', text: 'Kaydedilemedi: ' + h }));
+    });
+  });
+  return { form: form, kutu: form, kaydetBtn: kaydetBtn, dolu: dolu };
+}
+
+function sonucMesaji(r) {
+  var yer = '“' + r.sayfa + '” sayfası, ' + r.satir + '. satır';
+  switch (r.durum) {
+    case 'tamam': return { tur: 'ok', metin: '✓ Kaydedildi: ' + yer + '. Başka kaydınız varsa formu tekrar doldurun.' };
+    case 'guncellendi': return { tur: 'ok', metin: '✓ Satırınız güncellendi: ' + yer + '.' };
+    case 'sifir': return { tur: 'ok', metin: '✓ 0 olarak kaydedildi.' };
+    case 'ortakEklendi': return { tur: 'ok', metin: '✓ Bu kayıt ' + (r.giren || 'başka bir öğretim elemanı') + ' tarafından zaten girilmiş (' + yer + '). Yeni satır açılmadı; adınız ortak olarak eklendi.' };
+    case 'zatenSizin': return { tur: 'tekrar', metin: 'Bu kaydı daha önce girmişsiniz (' + yer + '). Tekrar girilmedi.' };
+    case 'zatenOrtak': return { tur: 'tekrar', metin: 'Bu kayıt ' + (r.giren || 'başka bir öğretim elemanı') + ' tarafından girilmiş ve adınız ortak olarak zaten kayıtlı (' + yer + '). Tekrar girilmedi.' };
+    case 'tekrar': return { tur: 'tekrar', metin: 'Bu kayıt tabloda zaten var (' + yer + (r.giren ? ', giren: ' + r.giren : '') + '). Mükerrer kayıt engellendi.' };
+    default: return { tur: 'hata', metin: 'Beklenmeyen yanıt.' };
+  }
+}
+
+// ---- Çıktı sayıları adımı ----
+function ciktiAdimi(i) {
+  var p = el('section', { class: 'panel' });
+  p.appendChild(adimBasligi(i));
+  p.appendChild(el('div', { class: 'uyari', text: 'EEE_2026_Ciktilar dosyasındaki sütununuz. Her kalem için bir sayı bekleniyor; yoksa 0. Künyeye girdiğiniz makale, kitap, patent ve türü belli projeler otomatik sayıldı. Künyede olmayan kalemler (katılım, teknopark, burs türleri vb.) 0 olarak geldi; varsa düzeltiniz.' }));
+  var yuk = el('p', { class: 'bos', text: 'Çıktı sayılarınız hesaplanıyor…' });
+  p.appendChild(yuk);
+  $('icerik').appendChild(p);
+  sunucu('ciktiGetir', [D.ad], function (r) {
+    yuk.remove();
+    if (!r.sutunVar) {
+      p.appendChild(el('div', { class: 'mesaj tekrar', text: 'Çıktı sayıları dosyasında yalnızca bölüm kadrosunun sütunları var. Künye kayıtlarınız kaydedildi; sayılar için bölüm BAK üyesine yazınız.' }));
+      p.appendChild(el('div', { class: 'gezinme' }, [
+        el('button', { class: 'btn', type: 'button', text: '← Geri', onclick: function () { adimGoster(i - 1); } }),
+        el('button', { class: 'btn ana', type: 'button', text: 'İleri →', onclick: function () { adimGoster(i + 1); } })
+      ]));
+      return;
+    }
+    if (r.sonKayit) p.appendChild(el('div', { class: 'ipucu', text: 'Son kayıt: ' + r.sonKayit.replace(/^.*?– /, '') }));
+    var girdiler = {};
+    var kaynakBaslik = { bap: 'Künyedeki BAP projeleriniz (alt türünü aşağıda işaretleyin)', proje: 'Künyedeki "DİĞER" türündeki projeleriniz', burs: 'Künyedeki TÜBİTAK burslarınız', toplanti: 'Bölümün künyedeki etkinlikleri' };
+    VERI.cikti.forEach(function (g) {
+      var kutu = el('fieldset', { class: 'grup' }, [el('legend', { text: g.baslik })]);
+      var kaynak = g.kaynak && r.kaynaklar[g.kaynak];
+      var ek = g.kaynak === 'bap' ? (r.kaynaklar.proje || []) : [];
+      if ((kaynak && kaynak.length) || ek.length) {
+        var not = el('div', { class: 'kaynak' }, [el('b', { text: kaynakBaslik[g.kaynak] + ':' })]);
+        var ul = el('ul'); (kaynak || []).forEach(function (t) { ul.appendChild(el('li', { text: t })); }); not.appendChild(ul);
+        if (ek.length) {
+          not.appendChild(el('b', { text: kaynakBaslik.proje + ' (ulusal/uluslararası satırına işleyin):' }));
+          var ul2 = el('ul'); ek.forEach(function (t) { ul2.appendChild(el('li', { text: t })); }); not.appendChild(ul2);
+        }
+        kutu.appendChild(not);
+      }
+      g.kalemler.forEach(function (k) {
+        var oto = r.oto[k.satir] || 0;
+        var kayitli = r.kayitli[k.satir];
+        var deger = kayitli !== undefined ? kayitli : oto;
+        var id = 'c' + k.satir;
+        var inp = el('input', { id: id, type: 'number', min: '0', step: '1', inputmode: 'numeric', value: String(deger), required: true });
+        girdiler[k.satir] = inp;
+        var ipuclari = el('div', { class: 'ipucu' });
+        if (oto) ipuclari.appendChild(el('span', { class: 'rozet bilgi', text: 'Künyeden: ' + oto }));
+        if (kayitli !== undefined && kayitli !== oto && oto) ipuclari.appendChild(el('span', { class: 'rozet', text: 'Kayıtlı değer künyeden farklı' }));
+        if (k.ipucu) ipuclari.appendChild(document.createTextNode(k.ipucu));
+        kutu.appendChild(el('div', { class: 'cikti-satir' }, [
+          el('label', { for: id, text: k.etiket }), inp, ipuclari.childNodes.length ? ipuclari : null
+        ]));
+      });
+      p.appendChild(kutu);
+    });
+    var mesaj = el('div', { 'aria-live': 'polite' });
+    var kaydetBtn = el('button', { class: 'btn ana', type: 'button', text: 'Onayla ve kaydet →' });
+    kaydetBtn.onclick = function () {
+      var degerler = {}, hata = null;
+      Object.keys(girdiler).forEach(function (satir) {
+        var v = girdiler[satir].value.trim();
+        girdiler[satir].parentNode.classList.remove('hata-alan');
+        if (!/^\d+$/.test(v)) { hata = hata || girdiler[satir]; girdiler[satir].parentNode.classList.add('hata-alan'); }
+        degerler[satir] = v;
+      });
+      mesaj.innerHTML = '';
+      if (hata) { mesaj.appendChild(el('div', { class: 'mesaj hata', text: 'Tüm kalemlere 0 veya pozitif tam sayı giriniz.' })); hata.focus(); return; }
+      kaydetBtn.disabled = true; kaydetBtn.textContent = 'Kaydediliyor…';
+      sunucu('ciktiKaydet', [D.ad, degerler], function () {
+        D.ciktiKayitli = true; durumSakla(); adimGoster(i + 1);
+      }, function (h) {
+        kaydetBtn.disabled = false; kaydetBtn.textContent = 'Onayla ve kaydet →';
+        mesaj.appendChild(el('div', { class: 'mesaj hata', text: 'Kaydedilemedi: ' + h }));
+      });
+    };
+    p.appendChild(el('div', { class: 'gezinme' }, [
+      el('button', { class: 'btn', type: 'button', text: '← Geri', onclick: function () { adimGoster(i - 1); } }), kaydetBtn
+    ]));
+    p.appendChild(mesaj);
+  }, function (h) {
+    yuk.textContent = 'Çıktı sayıları alınamadı: ' + h;
+  });
+}
+
+// ---- Özet ----
+function ozetAdimi() {
+  var p = el('section', { class: 'panel' });
+  p.appendChild(el('div', { class: 'form-baslik' }, [el('span', { class: 's', text: '✅' }), el('h2', { text: 'Özet' })]));
+  var eksik = [];
+  var t = el('table', { class: 'liste' });
+  t.appendChild(el('thead', {}, [el('tr', {}, [el('th', { text: 'Adım' }), el('th', { text: 'Durum' })])]));
+  var tb = el('tbody');
+  ADIMLAR.forEach(function (a, i) {
+    if (a.tip === 'bitti') return;
+    var d = adimDurumu(i);
+    var metin = a.tip === 'cikti' ? (d === 'var' ? '✓ Kaydedildi' : 'Kaydedilmedi')
+      : d === 'var' ? '✓ ' + Math.max(kisiKayitSayisi(a.s.anahtar), D.eklenen[a.s.anahtar] || 0) + ' kayıt' : d === 'yok' ? '0 (kaydım yok)' : 'Yanıtlanmadı';
+    if (d === 'bos') eksik.push(i);
+    tb.appendChild(el('tr', {}, [
+      el('td', {}, [el('button', { class: 'linkbtn', type: 'button', style: 'margin:0', text: a.simge + ' ' + a.baslik, onclick: function () { adimGoster(i); } })]),
+      el('td', { class: d === 'bos' ? 'eksik' : '', text: metin })
+    ]));
+  });
+  t.appendChild(tb);
+  if (eksik.length) {
+    p.appendChild(el('div', { class: 'mesaj tekrar', text: eksik.length + ' adım yanıtlanmadı. Her kalem için kayıt girmeniz ya da "kaydım yok (0)" demeniz gerekiyor.' }));
+  } else {
+    p.appendChild(el('div', { class: 'mesaj ok', text: '✓ Tüm adımlar tamamlandı. Verileriniz EEE_BAK_2026_CiktiKunye ve EEE_2026_Ciktilar dosyalarına kaydedildi. Teşekkürler!' }));
+  }
+  p.appendChild(t);
+  p.appendChild(el('div', { class: 'gezinme' }, [
+    el('button', { class: 'btn', type: 'button', text: '← Geri', onclick: function () { adimGoster(ADIMLAR.length - 2); } }),
+    eksik.length ? el('button', { class: 'btn ana', type: 'button', text: 'İlk eksik adıma git →', onclick: function () { adimGoster(eksik[0]); } }) : null
+  ]));
+  $('icerik').appendChild(p);
+}
+
+if (oku('kisi') !== '' && $('pKisi').value !== '') $('baslaBtn').textContent = 'Devam et →';
 </script>
 </body>
 </html>

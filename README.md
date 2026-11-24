@@ -1,29 +1,26 @@
-# BAK 2026 Çıktı Künye – Veri Giriş Formu
+# BAK 2026 – EEE Veri Giriş Formu
 
-Öğretim üyelerinin `XXXX_BAK_2026_CiktiKunye.xlsx` tablosuna **form üzerinden** veri girmesini sağlayan Google Apps Script uygulaması.
+Elektrik-Elektronik Mühendisliği öğretim elemanlarının 2026 Birim Faaliyet Raporu verilerini toplayan Google Apps Script web uygulaması. Veriler iki Google E-Tablo'ya yazılır:
 
-- Öğretim üyesi bir **bağlantıya tıklar**, kategori seçer (Yayın, Proje, Patent, Ödül…), formu doldurur, **Kaydet**'e basar.
-- Kayıt, ilgili sayfadaki **ilk boş satıra** yazılır. Hücrelerin yerini bilmesine, sağa kaydırmasına, örnek satırları korumasına gerek kalmaz.
-- Açılır listeler Excel'deki listelerle aynıdır. Zorunlu alanlar ve tarih tutarlılığı kontrol edilir.
-- **Veri Giriş Tarihi** sabit tarih olarak yazılır. Excel'deki `TODAY()` formülü her gün değiştiği için asıl giriş tarihini tutmuyordu. Hücre notuna girenin e-postası da eklenir.
-- **Projeler** sayfasındaki "Yıl" sütunu ve **Patent** sayfasındaki "MMF" otomatik doldurulur.
-- Aynı başlık daha önce girildiyse **mükerrer kayıt uyarısı** verir.
-- Tablo dolarsa altına **otomatik satır ekler** (biçim ve açılır listeler kopyalanır).
-- **Elektrik-Elektronik Müh. kadrosu** listeden adını seçer; ad ve bölüm her forma otomatik gelir. Listede olmayanlar "Listede yokum" seçip adını ve bölümünü yazar. Seçim tarayıcıda hatırlanır.
-- Kadro listesi `Kod.gs` içindeki `KADRO` sabitindedir (kaynak: eee.ikcu.edu.tr akademik personel sayfası). Kadro değişince bu listeyi güncelleyin.
-- **Girdiğim Kayıtlar** sekmesinde öğretim üyesi kendi kayıtlarını görür.
-- Telefon ekranında da çalışır.
-- **Yayınları otomatik getirme** (Bilimsel Yayın formu):
-  - *Yayınlarımı getir*: öğretim üyesinin İKÇÜ adresli yayınlarını açık akademik veritabanı [OpenAlex](https://openalex.org)'ten seçilen yıl için getirir. Bulunamazsa ORCID ile aranabilir.
-  - *Google Scholar'dan aktar*: Scholar profilinde yayınlar seçilip **Dışa aktar → BibTeX** metni yapıştırılır. Kayıtlar mümkünse OpenAlex'le eşleştirilip DOI, dil ve atıf bilgisi eklenir.
-  - Her iki yolda da APA künye, tür, dil, yayım yeri, İKÇÜ'lü ortak yazarlar ve atıf sayısı otomatik doldurulur. Tabloda zaten olan yayınlar işaretlenir. İndeks ve Q grubu veritabanlarında bulunmadığı için listeden seçilir. Kullanıcı kontrol edip seçtiklerini tek tuşla kaydeder.
-  - Google Scholar'ın resmi API'si olmadığı ve otomatik okunması Scholar kurallarına aykırı olduğu için profil sayfası doğrudan çekilmez.
+1. **EEE_BAK_2026_CiktiKunye**: faaliyet künyeleri (BAK şablonu `XXXX_BAK_2026_CiktiKunye.xlsx`)
+2. **EEE_2026_Ciktilar**: öğretim elemanı bazlı bilimsel çıktı sayıları (BAK şablonu `XXXX_2026_Ciktilar.xlsx`)
+
+## Nasıl çalışır
+
+- **Kimlik:** Öğretim elemanı listeden adını seçer. Kadroda olmayanlar adını elle yazar.
+- **Adım adım akış:** Her kalem bir adımdır (yayın, proje, etkinlik, patent, ödül, TÜBİTAK bursu, kurum destekli Ar-Ge, editörlük/hakemlik, eğitici eğitimi, çıktı sayıları). Her adımda ya kayıt girilir ya da "Bu kalemde kaydım yok (0)" denir. Üstteki adım çubuğu durumu gösterir: ✓ girildi, 0 yok, numara yanıtlanmadı. Son adımdaki özet eksik adımları listeler.
+- **Tablodaki kayıtlar:** Ad seçilince kişinin tablodaki kayıtları her adımda listelenir. Liste kendi girdiklerini ve ortak yazar/araştırmacı olarak adının geçtiklerini içerir.
+- **Mükerrer engeli:** Aynı yayın (DOI ya da APA künyesindeki başlık), aynı proje adı vb. ikinci kez girilemez. Ortak yazar girmeye çalışırsa yeni satır açılmaz, adı mevcut satırın "MMF'den ortak yazarlar" (projede "Araştırmacılar") sütununa eklenir.
+- **Yayınları otomatik getirme:** OpenAlex'ten tek tıkla ya da Google Scholar BibTeX ile. Tabloda zaten olan yayınlar kilitli gelir. Başkasının girdiği yayın seçilirse kişi ortak yazar olarak eklenir.
+- **Çıktı sayıları:** Son adımda kişinin EEE_2026_Ciktilar sütunu gelir. Künyeden hesaplananlar önceden doldurulur: makale (WoS/ESCI/TR Dizin/Diğer), kitap, patent türü ve türü belli projeler. Diğer kalemler 0 gelir. Her kalem için sayı zorunludur, 0 dahil. Onaylanınca sütun yazılır.
+- **Editörlük/hakemlik:** Kişi başına tek satırdır, tekrar kaydedilince güncellenir. 0/0 girilirse satır boşaltılır.
 
 ## Dosyalar
 
 | Dosya | İçerik |
 |---|---|
 | `apps-script/Kod.gs` | Sunucu kodu: sayfa şeması, kayıt, mükerrer kontrolü, menü |
+| `apps-script/Cikti.gs` | Çıktı sayıları: kalem listesi, künyeden otomatik sayım, EEE_2026_Ciktilar'a yazma |
 | `apps-script/Yayin.gs` | Yayın içe aktarma: OpenAlex sorgusu, Scholar BibTeX çözücü, APA künye |
 | `apps-script/Form.html` | Form arayüzü |
 
@@ -72,6 +69,17 @@ Tüm sayfa/sütun tanımları `Kod.gs` içindeki `SEMA` dizisindedir:
 - Bölüm listesi: `BOLUMLER`
 
 Örneğin yeni bir proje türü eklemek için `Projeler` tanımındaki `secenekler` listesine ekleyin. E-Tablodaki açılır listeyi de (*Veri → Veri doğrulama*) aynı şekilde güncelleyin.
+
+## Yerel ayarlar (Ayarlar.gs)
+
+Depoya eklenmeyen `apps-script/Ayarlar.gs` dosyası Apps Script projesine ayrıca eklenir:
+
+```js
+var OPENALEX_API_KEY = '...';   // https://openalex.org/settings/api-key
+var CIKTI_TABLO_ID = '...';     // EEE_2026_Ciktilar e-tablosunun kimliği (URL'deki /d/ ile /edit arası)
+```
+
+Aynı değerler Komut dosyası özellikleri (`OPENALEX_API_KEY`, `CIKTI_TABLO_ID`) olarak da girilebilir.
 
 ## Rapor dönemi
 
