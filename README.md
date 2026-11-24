@@ -11,6 +11,10 @@ Elektrik-Elektronik Mühendisliği öğretim elemanlarının 2026 Birim Faaliyet
 - **Adım adım akış:** Her kalem bir adımdır (yayın, proje, etkinlik, patent, ödül, TÜBİTAK bursu, kurum destekli Ar-Ge, editörlük/hakemlik, eğitici eğitimi, çıktı sayıları). Her adımda ya kayıt girilir ya da "Bu kalemde kaydım yok (0)" denir. Üstteki adım çubuğu durumu gösterir: ✓ girildi, 0 yok, numara yanıtlanmadı. Son adımdaki özet eksik adımları listeler.
 - **Tablodaki kayıtlar:** Ad seçilince kişinin tablodaki kayıtları her adımda listelenir. Liste kendi girdiklerini ve ortak yazar/araştırmacı olarak adının geçtiklerini içerir.
 - **Mükerrer engeli:** Aynı yayın (DOI ya da APA künyesindeki başlık), aynı proje adı vb. ikinci kez girilemez. Ortak yazar girmeye çalışırsa yeni satır açılmaz, adı mevcut satırın "MMF'den ortak yazarlar" (projede "Araştırmacılar") sütununa eklenir.
+- **Mükerrer denetimi (üç katman):**
+  1. *Kayıt anında:* Sunucu her kaydı tablodakilerle karşılaştırır. Yayında DOI ya da künyedeki başlık; projede proje adı; etkinlikte etkinlik adı; patentte başvuran + buluş adı (başvuru türü eki hariç); ödülde kişi + tür + kurum; bursta kişi + kapsam + başlama + başlık; Ar-Ge'de yürütücü + kapsam + başlık; eğitici eğitiminde kişi + konu + tür. Büyük/küçük harf, Türkçe karakter, noktalama, boşluk ve tarih biçimi farkları yok sayılır.
+  2. *Yazarken:* Formda anahtar alanlar doldurulunca tablo anında kontrol edilir. Kayıt varsa uyarı çıkar, "Kaydet" kilitlenir. Ortak yazar ise düğme "Ortak olarak ekle" olur.
+  3. *Drive dosyasında:* E-tabloya elle mükerrer satır girilirse uyarı çıkar ve hücreye "⚠ Mükerrer" notu düşer (`onEdit`). E-tablo menüsündeki **📋 BAK Veri Girişi → Mükerrer ve tutarlılık denetimi** raporu üç şeyi gösterir: tüm sayfalardaki mükerrer grupları (fazla satırlara not düşer), künye ile çıktı sayıları arasındaki tutarsızlıkları ve kişi bazında doluluk durumunu.
 - **Yayınları otomatik getirme:** OpenAlex'ten tek tıkla ya da Google Scholar BibTeX ile. Tabloda zaten olan yayınlar kilitli gelir. Başkasının girdiği yayın seçilirse kişi ortak yazar olarak eklenir.
 - **Çıktı sayıları:** Son adımda kişinin EEE_2026_Ciktilar sütunu gelir. Künyeden hesaplananlar önceden doldurulur: makale (WoS/ESCI/TR Dizin/Diğer), kitap, patent türü ve türü belli projeler. Diğer kalemler 0 gelir. Her kalem için sayı zorunludur, 0 dahil. Onaylanınca sütun yazılır.
 - **Editörlük/hakemlik:** Kişi başına tek satırdır, tekrar kaydedilince güncellenir. 0/0 girilirse satır boşaltılır.
@@ -20,6 +24,7 @@ Elektrik-Elektronik Mühendisliği öğretim elemanlarının 2026 Birim Faaliyet
 | Dosya | İçerik |
 |---|---|
 | `apps-script/Kod.gs` | Sunucu kodu: sayfa şeması, kayıt, mükerrer kontrolü, menü |
+| `apps-script/Denetim.gs` | Elle girişte mükerrer uyarısı (onEdit), mükerrer/tutarlılık denetim raporu |
 | `apps-script/Cikti.gs` | Çıktı sayıları: kalem listesi, künyeden otomatik sayım, EEE_2026_Ciktilar'a yazma |
 | `apps-script/Yayin.gs` | Yayın içe aktarma: OpenAlex sorgusu, Scholar BibTeX çözücü, APA künye |
 | `apps-script/Form.html` | Form arayüzü |

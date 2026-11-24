@@ -74,7 +74,8 @@ var RAPOR = {
  *   tarihSutun : "Veri Giriş Tarihi" sütunu (otomatik doldurulur)
  *   sabit      : Her satıra otomatik yazılan sabit değerler {sutun: değer}
  *   yil        : Bu sütuna rapor yılı otomatik yazılır
- *   tekrar     : Aynı değer varsa kullanıcıyı uyaran sütun (mükerrer kontrol)
+ *   tekrar     : Mükerrer kontrolünün ana sütunu (yayında künye imzası: DOI/başlık)
+ *   tekrarAnahtar: Bileşik mükerrer anahtarı [sütunlar]; hepsi eşitse kayıt aynı sayılır
  *   donemKesisim: [başlama, bitiş] sütunları; faaliyet rapor dönemiyle kesişmelidir
  *   ortakSutun : Ortak yazar/araştırmacı adlarının tutulduğu sütun (mükerrer girişte ad buraya eklenir)
  *   kisiBasinaTek: Kişi başına tek satır; tekrar kaydedilince satır güncellenir
@@ -161,7 +162,7 @@ var SEMA = [
     anahtar: 'patent', baslik: 'Patent / Faydalı Model / Tasarım', simge: '💡',
     aciklama: '2026’da yapılan başvurular',
     uyari: '01.01–31.12.2026 arasında yapılan patent, faydalı model ve tasarım başvurularını ekleyiniz.',
-    sayfa: 'Patent', ilk: 9, son: 25, tarihSutun: 'I', sabit: { B: 'MMF' }, tekrar: 'E',
+    sayfa: 'Patent', ilk: 9, son: 25, tarihSutun: 'I', sabit: { B: 'MMF' }, tekrar: 'E', tekrarAnahtar: ['D', 'E'],
     // Başvuru türü künyede ayrı sütun olmadığı için buluş adının sonuna "(Ulusal Patent)" gibi eklenir;
     // çıktı sayıları (Ulusal/Uluslararası Patent, Faydalı Model) buradan hesaplanır.
     sonEk: { sutun: 'E', alan: 'basvuruTuru' },
@@ -180,7 +181,7 @@ var SEMA = [
     anahtar: 'odul', baslik: 'Ödül', simge: '🏆',
     aciklama: 'YÖK, TÜBA, TÜBİTAK Bilim, Teşvik ve Sanat Ödülleri',
     uyari: 'Yalnızca YÖK, TÜBA ve TÜBİTAK’ın verdiği, 2026’da alınan Bilim, Teşvik ve Sanat ödüllerini ekleyiniz.',
-    sayfa: 'Ödüller', ilk: 6, son: 31, tarihSutun: 'H',
+    sayfa: 'Ödüller', ilk: 6, son: 31, tarihSutun: 'H', tekrarAnahtar: ['C', 'D', 'E'],
     alanlar: [
       { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'C', etiket: 'Ödülü Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
@@ -194,7 +195,7 @@ var SEMA = [
     anahtar: 'bursTubitak', baslik: 'TÜBİTAK Araştırma Bursu', simge: '🎓',
     aciklama: 'TÜBİTAK’tan aldığınız yurt içi/yurt dışı araştırma bursu',
     uyari: '2026 içinde devam eden, tamamlanan veya iptal edilen TÜBİTAK araştırma burslarını (ör. 2219, 2218) ekleyiniz.',
-    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'I', ozet: ['G', 'D', 'H'], donemKesisim: ['E', 'F'],
+    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'I', ozet: ['G', 'D', 'H'], donemKesisim: ['E', 'F'], tekrarAnahtar: ['C', 'D', 'E', 'G'],
     alanlar: [
       { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'C', etiket: 'Bursu Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
@@ -209,7 +210,7 @@ var SEMA = [
     anahtar: 'bursArge', baslik: 'Kurum Destekli Ar-Ge Projesi', simge: '🏢',
     aciklama: 'Özel/resmi kurumların desteklediği Ar-Ge projeleri',
     uyari: 'Ulusal veya uluslararası özel ya da resmi kurumların desteklediği, 2026 içinde süren Ar-Ge projelerini ekleyiniz (TÜBİTAK/BAP projeleri "Bilimsel Araştırma Projesi" bölümüne girilir).',
-    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'R', ozet: ['P', 'M', 'Q'], donemKesisim: ['N', 'O'],
+    sayfa: 'Burslar', ilk: 7, son: 33, tarihSutun: 'R', ozet: ['P', 'M', 'Q'], donemKesisim: ['N', 'O'], tekrarAnahtar: ['L', 'M', 'P'],
     alanlar: [
       { sutun: 'K', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'L', etiket: 'Yürütücü Öğretim Elemanı', tip: 'ad', zorunlu: true },
@@ -239,7 +240,7 @@ var SEMA = [
     anahtar: 'egitici', baslik: 'Eğitici Eğitimi', simge: '👩‍🏫',
     aciklama: 'Aldığınız eğitici eğitimleri (yıl sınırı yok)',
     uyari: 'Öğretim becerilerine yönelik aldığınız eğitimleri ekleyiniz. Bu bölümde yıl sınırı yoktur; daha önce bildirilmemiş tüm eğitimler girilebilir.',
-    sayfa: 'Eğitici Eğitimi Faaliyetleri', ilk: 5, son: 30, tarihSutun: 'I',
+    sayfa: 'Eğitici Eğitimi Faaliyetleri', ilk: 5, son: 30, tarihSutun: 'I', tekrarAnahtar: ['C', 'D', 'E', 'F'],
     alanlar: [
       { sutun: 'B', etiket: 'Bölüm', tip: 'bolum', zorunlu: true },
       { sutun: 'C', etiket: 'Eğitimi Alan Öğretim Elemanı', tip: 'ad', zorunlu: true },
@@ -266,6 +267,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('📋 BAK Veri Girişi')
     .addItem('Veri giriş formunu aç', 'formuAc')
+    .addItem('Mükerrer ve tutarlılık denetimi', 'denetimPenceresi')
     .addSeparator()
     .addItem('Web uygulaması bağlantısını göster', 'baglantiGoster')
     .addToUi();
@@ -336,26 +338,18 @@ function kaydet(anahtar, veri) {
 
     // Mükerrer kontrolü: aynı kayıt ikinci kez girilemez. Ortak yazar / araştırmacı girmeye
     // çalışırsa yeni satır açılmaz, adı mevcut satırın ortak sütununa eklenir.
-    if (s.tekrar && veri[s.tekrar]) {
-      var es = tekrarBul_(sh, s, ilk, son, veri[s.tekrar]);
-      if (es) {
-        var sonucT = { durum: 'tekrar', sayfa: s.sayfa, satir: es.satir, giren: es.giren };
-        if (s.ortakSutun && gonderen) {
-          var ka = kisiAnahtar_(gonderen);
-          if (es.giren && katla_(es.giren) === ka.tam) {
-            sonucT.durum = 'zatenSizin';
-          } else if (iliskili_(es.ortak, ka)) {
-            sonucT.durum = 'zatenOrtak';
-          } else {
-            var h = sh.getRange(es.satir, sutunNo_(s.ortakSutun));
-            var yeni = s.ortakSutun === 'J' ? apaAd_(gonderen) : gonderen;
-            h.setValue(es.ortak ? String(es.ortak).replace(/[;\s]+$/, '') + (s.ortakSutun === 'J' ? '; ' : '\n') + yeni : yeni);
-            SpreadsheetApp.flush();
-            sonucT.durum = 'ortakEklendi';
-          }
-        }
-        return sonucT;
+    var es = tekrarBul_(sh, s, ilk, son, veri);
+    if (es) {
+      var sonucT = tekrarDurumu_(s, es, gonderen);
+      sonucT.sayfa = s.sayfa;
+      if (sonucT.durum === 'ortakEklenebilir') {
+        var h = sh.getRange(es.satir, sutunNo_(s.ortakSutun));
+        var yeni = s.ortakSutun === 'J' ? apaAd_(gonderen) : gonderen;
+        h.setValue(es.ortak ? String(es.ortak).replace(/[;\s]+$/, '') + (s.ortakSutun === 'J' ? '; ' : '\n') + yeni : yeni);
+        SpreadsheetApp.flush();
+        sonucT.durum = 'ortakEklendi';
       }
+      return sonucT;
     }
 
     // Kişi başına tek satır (editörlük/hakemlik): varsa güncelle, sayılar 0 ise satırı boşalt
@@ -510,34 +504,88 @@ function kunyeImza_(metin) {
   return { doi: doi, baslik: m ? katla_(m[1]) : '', tum: katla_(metin) };
 }
 
-/** Aynı kaydı arar. Yayında DOI/başlık, diğerlerinde anahtar sütunun birebir eşleşmesi. */
-function tekrarBul_(sh, s, ilk, son, deger) {
+/** Mükerrer anahtar sütunları. */
+function anahtarSutunlari_(s) {
+  return s.tekrarAnahtar || (s.tekrar ? [s.tekrar] : []);
+}
+
+/**
+ * Karşılaştırma için sütun değeri: Türkçe karakter/noktalama/büyük-küçük harf farkı
+ * yok sayılır, tarihler tek biçime çevrilir, patent başvuru türü eki atılır.
+ */
+function anahtarDeger_(s, c, v) {
+  v = String(v === undefined || v === null ? '' : v).trim();
+  if (s.sonEk && c === s.sonEk.sutun) v = v.replace(/\s*\([^()]*\)\s*$/, '');
+  var t = ilkTarih_(v);
+  if (t && /^\d{4}-\d{2}-\d{2}$|^\d{2}\.\d{2}\.\d{4}$/.test(v)) return t;
+  return katla_(v).replace(/\s+/g, ''); // "T.Ü.B.A." ile "TÜBA" aynı sayılır
+}
+
+/** İki yayın künyesi aynı yayın mı? (DOI ya da başlık) */
+function yayinEsit_(yeni, e) {
+  return (yeni.doi && yeni.doi === e.doi) ||
+    (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
+    yeni.tum === e.tum ||
+    (yeni.baslik.length >= 20 && e.tum.indexOf(yeni.baslik) !== -1) ||
+    (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1);
+}
+
+/**
+ * Aynı kaydı arar (haric: kendisiyle karşılaştırılmayacak satır).
+ * @return {Object|null} {satir, giren, ortak}
+ */
+function tekrarBul_(sh, s, ilk, son, veri, haric) {
+  var kols = anahtarSutunlari_(s);
+  if (!kols.length || !String(veri[kols[0]] || '').trim()) return null;
   var n = son - ilk + 1;
-  var anahtarlar = sh.getRange(ilk, sutunNo_(s.tekrar), n, 1).getDisplayValues();
+  var genislik = sutunNo_(s.tarihSutun);
+  var v = sh.getRange(ilk, 1, n, genislik).getDisplayValues();
   var sahip = sahipSutunlari_(s)[0];
-  var sahipler = sahip ? sh.getRange(ilk, sutunNo_(sahip), n, 1).getDisplayValues() : null;
-  var ortaklar = s.ortakSutun ? sh.getRange(ilk, sutunNo_(s.ortakSutun), n, 1).getDisplayValues() : null;
-  var yeni = s.anahtar === 'yayin' ? kunyeImza_(deger) : null;
-  var yeniN = normalize_(deger);
+  var yayin = s.anahtar === 'yayin' ? kunyeImza_(veri[kols[0]]) : null;
+  var yeni = kols.map(function (c) { return anahtarDeger_(s, c, veri[c]); });
   for (var i = 0; i < n; i++) {
-    var v = anahtarlar[i][0];
-    if (!v) continue;
-    var esit;
-    if (yeni) {
-      var e = kunyeImza_(v);
-      esit = (yeni.doi && yeni.doi === e.doi) ||
-        (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
-        yeni.tum === e.tum ||
-        (yeni.baslik.length >= 20 && e.tum.indexOf(yeni.baslik) !== -1) ||
-        (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1);
-    } else {
-      esit = normalize_(v) === yeniN;
-    }
+    if (ilk + i === haric) continue;
+    var r = v[i];
+    var hucre = function (c) { return r[sutunNo_(c) - 1]; };
+    if (!String(hucre(kols[0])).trim()) continue;
+    var esit = yayin ? yayinEsit_(yayin, kunyeImza_(hucre(kols[0])))
+      : kols.every(function (c, j) { return anahtarDeger_(s, c, hucre(c)) === yeni[j]; });
     if (esit) {
-      return { satir: ilk + i, giren: sahipler ? sahipler[i][0] : '', ortak: ortaklar ? ortaklar[i][0] : '' };
+      return { satir: ilk + i, giren: sahip ? hucre(sahip) : '', ortak: s.ortakSutun ? hucre(s.ortakSutun) : '' };
     }
   }
   return null;
+}
+
+/** Bulunan mükerrer için gönderene göre durum. */
+function tekrarDurumu_(s, es, gonderen) {
+  var r = { durum: 'tekrar', satir: es.satir, giren: es.giren };
+  if (gonderen) {
+    var ka = kisiAnahtar_(gonderen);
+    if (es.giren && katla_(es.giren) === ka.tam) r.durum = 'zatenSizin';
+    else if (s.ortakSutun && iliskili_(es.ortak, ka)) r.durum = 'zatenOrtak';
+    else if (s.ortakSutun) r.durum = 'ortakEklenebilir';
+  }
+  return r;
+}
+
+/**
+ * Formda yazarken anlık mükerrer kontrolü (hiçbir şey yazmaz).
+ * @return {Object} {durum: 'yok'|'tekrar'|'zatenSizin'|'zatenOrtak'|'ortakEklenebilir', satir, giren}
+ */
+function tekrarKontrol(anahtar, veri) {
+  var s = semaBul_(anahtar);
+  veri = JSON.parse(JSON.stringify(veri || {}));
+  if (s.sonEk && veri[s.sonEk.alan] && veri[s.sonEk.sutun]) veri[s.sonEk.sutun] = String(veri[s.sonEk.sutun]).trim() + ' (' + veri[s.sonEk.alan] + ')';
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
+  var sh = ss.getSheetByName(s.sayfa);
+  if (!sh) return { durum: 'yok' };
+  var ar = tabloAraligi_(ss, sh, s);
+  var es = tekrarBul_(sh, s, ar.getRow(), ar.getRow() + ar.getNumRows() - 1, veri);
+  if (!es) return { durum: 'yok' };
+  var r = tekrarDurumu_(s, es, gonderenAdi_(s, veri));
+  r.sayfa = s.sayfa;
+  return r;
 }
 
 function kisiSatiri_(sh, s, ilk, son, ad) {

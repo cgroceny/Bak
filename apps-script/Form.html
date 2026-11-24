@@ -225,6 +225,12 @@ function sunucu(fn, args, ok, hata) {
       demoKayitlar.push({ a: s.anahtar, t: anahtar || '', sayfa: s.sayfa, satir: satir, giren: ad, ortaklar: [], degerler: v,
         ozet: ozetSut.map(function (c) { return v[c]; }).filter(Boolean).join(' · '), tarih: new Date().toLocaleDateString('tr-TR') });
       ok({ durum: 'tamam', sayfa: s.sayfa, satir: satir });
+    } else if (fn === 'tekrarKontrol') {
+      var s2 = semaBul(args[0]), v2 = args[1], kol = (s2.tekrarAnahtar || [s2.tekrar])[0];
+      var es2 = demoKayitlar.filter(function (k) { return k.a === s2.anahtar && k.degerler && katla(k.degerler[kol]) === katla(v2[kol]); })[0];
+      if (!es2) return ok({ durum: 'yok' });
+      var gon = $('pAd').value.trim();
+      return ok({ durum: katla(es2.giren) === katla(gon) ? 'zatenSizin' : es2.ortaklar.indexOf(katla(gon)) !== -1 ? 'zatenOrtak' : s2.ortakSutun ? 'ortakEklenebilir' : 'tekrar', satir: es2.satir, giren: es2.giren });
     } else if (fn === 'kisiKayitlari') {
       var r = {};
       SEMA.forEach(function (s) { r[s.anahtar] = []; });
@@ -611,6 +617,7 @@ function formuDoldur(form, veri) {
     var g = form.elements[c];
     if (g && veri[c] !== undefined && veri[c] !== null) g.value = veri[c];
   });
+  if (form.elements.C) form.elements.C.dispatchEvent(new Event('change', { bubbles: true }));
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   var ilk = form.elements.B; if (ilk) ilk.focus({ preventScroll: true });
 }
@@ -809,6 +816,8 @@ function formOlustur(s, kaydedildi) {
   s.alanlar.forEach(function (a) { izgara.appendChild(alanOlustur(a)); });
   form.appendChild(izgara);
   var mesajKutu = el('div', { 'aria-live': 'polite' });
+  var kontrolKutu = el('div', { 'aria-live': 'polite' });
+  form.appendChild(kontrolKutu);
   var kaydetBtn = el('button', { class: 'btn ana', type: 'submit', text: 'Kaydet' });
   form.appendChild(el('div', { class: 'butonlar' }, [
     kaydetBtn,
@@ -831,7 +840,47 @@ function formOlustur(s, kaydedildi) {
     Array.prototype.forEach.call(form.elements, function (g) { if (g.name) g.value = g.getAttribute('data-v') || ''; });
     form.querySelectorAll('.hata-alan').forEach(function (k) { k.classList.remove('hata-alan'); });
     kosullariUygula();
+    kontrolSonucu({ durum: 'yok' });
   }
+
+  // Anlık mükerrer kontrolü: anahtar alanlar doldukça tablo kontrol edilir.
+  var anahtarKol = s.tekrarAnahtar || (s.tekrar ? [s.tekrar] : []);
+  var adAlan = s.alanlar.filter(function (a) { return a.tip === 'ad'; })[0];
+  var izlenen = anahtarKol.concat(s.sonEk ? [s.sonEk.alan] : []);
+  var kontrolZaman = null, kontrolNo = 0, varsayilanMetin = kaydetBtn.textContent;
+  function kontrolSonucu(r) {
+    kontrolKutu.innerHTML = '';
+    kaydetBtn.disabled = false;
+    kaydetBtn.textContent = varsayilanMetin;
+    if (!r || r.durum === 'yok') return;
+    var yer = r.satir + '. satır' + (r.giren ? ', giren: ' + r.giren : '');
+    if (r.durum === 'ortakEklenebilir') {
+      kontrolKutu.appendChild(el('div', { class: 'mesaj tekrar', text: 'Bu kayıt tabloda zaten var (' + yer + '). Kaydederseniz yeni satır açılmaz; adınız mevcut kayda ortak olarak eklenir.' }));
+      kaydetBtn.textContent = 'Ortak olarak ekle';
+      return;
+    }
+    var metin = r.durum === 'zatenSizin' ? 'Bu kaydı daha önce girmişsiniz (' + yer + ').'
+      : r.durum === 'zatenOrtak' ? 'Bu kayıt tabloda var ve adınız ortak olarak kayıtlı (' + yer + ').'
+      : 'Bu kayıt tabloda zaten var (' + yer + ').';
+    kontrolKutu.appendChild(el('div', { class: 'mesaj hata', text: '⚠ Mükerrer: ' + metin + ' Tekrar girilemez.' }));
+    kaydetBtn.disabled = true;
+  }
+  function anlikKontrol() {
+    clearTimeout(kontrolZaman);
+    kontrolZaman = setTimeout(function () {
+      var veri = {};
+      izlenen.concat(adAlan ? [adAlan.sutun || adAlan.anahtar] : []).forEach(function (c) {
+        var g = form.elements[c];
+        if (g) veri[c] = g.value.trim();
+      });
+      if (!anahtarKol.length || !veri[anahtarKol[0]]) { kontrolSonucu({ durum: 'yok' }); return; }
+      var no = ++kontrolNo;
+      sunucu('tekrarKontrol', [s.anahtar, veri], function (r) { if (no === kontrolNo) kontrolSonucu(r); }, function () {});
+    }, 600);
+  }
+  function izleniyorMu(t) { return t && t.name && (izlenen.indexOf(t.name) !== -1 || (adAlan && t.name === (adAlan.sutun || adAlan.anahtar))); }
+  form.addEventListener('change', function (e) { if (izleniyorMu(e.target)) anlikKontrol(); });
+  form.addEventListener('input', function (e) { if (izleniyorMu(e.target) && e.target.tagName !== 'SELECT') anlikKontrol(); });
   function dolu() {
     return Array.prototype.some.call(form.elements, function (g) { return g.name && g.value !== (g.getAttribute('data-v') || ''); });
   }
