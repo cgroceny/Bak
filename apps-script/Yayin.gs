@@ -90,15 +90,19 @@ function bibtexAktar(metin, ad, yil) {
   return { kayitlar: kayitlar, atlanan: atlanan, toplam: girdiler.length };
 }
 
-/** Seçilen kayıtları sırayla kaydeder. */
+/** Seçilen kayıtları sırayla kaydeder; çıktı sayılarını sonda bir kez eşitler. */
 function topluKaydet(anahtar, liste) {
-  return liste.map(function (veri) {
+  var sonuclar = liste.map(function (veri) {
     try {
-      return kaydet(anahtar, veri, true);
+      return kaydetIc_(anahtar, veri);
     } catch (e) {
       return { durum: 'hata', mesaj: e.message };
     }
   });
+  if (CIKTI_ETKILEYEN.indexOf(anahtar) !== -1 && sonuclar.some(function (r) { return r.durum === 'tamam' || r.durum === 'ortakEklendi'; })) {
+    ciktiEsitleGuvenli_();
+  }
+  return sonuclar;
 }
 
 // ---------------------------------------------------------------------------

@@ -268,6 +268,7 @@ function onOpen() {
     .createMenu('📋 BAK Veri Girişi')
     .addItem('Veri giriş formunu aç', 'formuAc')
     .addItem('Mükerrer ve tutarlılık denetimi', 'denetimPenceresi')
+    .addItem('Çıktı sayılarını künyeden güncelle', 'ciktiEsitleMenu')
     .addSeparator()
     .addItem('Web uygulaması bağlantısını göster', 'baglantiGoster')
     .addToUi();
@@ -312,6 +313,14 @@ function sayfaOlustur_() {
  * @return {Object} {durum: 'tamam'|'tekrar', sayfa, satir}
  */
 function kaydet(anahtar, veri) {
+  var r = kaydetIc_(anahtar, veri);
+  if (CIKTI_ETKILEYEN.indexOf(anahtar) !== -1 && ['tamam', 'guncellendi', 'ortakEklendi'].indexOf(r.durum) !== -1) {
+    r.cikti = ciktiEsitleGuvenli_(); // EEE_2026_Ciktilar'daki sayıları künyeyle eşitle
+  }
+  return r;
+}
+
+function kaydetIc_(anahtar, veri) {
   var s = semaBul_(anahtar);
   dogrula_(s, veri);
   if (s.sonEk && veri[s.sonEk.alan] && veri[s.sonEk.sutun]) {

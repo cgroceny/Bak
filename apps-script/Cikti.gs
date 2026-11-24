@@ -6,6 +6,9 @@
  * hesaplanan değerlerle önerilir; kişi kontrol edip onaylayınca yazılır. Her kalem
  * için değer beklendiğinden 0 da yazılır.
  *
+ * Künyeye yayın/patent/proje kaydedildiğinde otomatik satırlar (OTO_SATIRLAR) tüm
+ * kadro için künyeden yeniden hesaplanıp yazılır; kişi son adımda kalan kalemleri onaylar.
+ *
  * Dosyanın kimliği: Ayarlar.gs içindeki CIKTI_TABLO_ID ya da Komut dosyası
  * özelliği CIKTI_TABLO_ID.
  */
@@ -86,14 +89,24 @@ var PROJE_SATIRI = {
   'TÜBİTAK 1004': 38, 'TÜBİTAK 2209': 38, 'TÜBİTAK 3001': 38, 'TÜBİTAK 3005': 38, 'İZKA': 38, 'KOSGEB': 38
 };
 
+/** Künyeden otomatik hesaplanan satırlar: her kayıtta künyeyle eşitlenir, elle değiştirilmez. */
+var OTO_SATIRLAR = (function () {
+  var l = [9, 11, 12, 13, 15, 16, 18, 19, 20];
+  Object.keys(PROJE_SATIRI).forEach(function (k) { if (l.indexOf(PROJE_SATIRI[k]) === -1) l.push(PROJE_SATIRI[k]); });
+  return l;
+})();
+
+/** Künyeyi etkileyen kategoriler (kaydedilince çıktı sayıları eşitlenir). */
+var CIKTI_ETKILEYEN = ['yayin', 'patent', 'proje'];
+
 /**
- * Kişinin çıktı sayıları: kayıtlı değerler, künyeden hesaplanan öneriler ve
- * elle girilecek kalemler için künyedeki ilgili kayıtlar.
+ * Kişinin çıktı sayıları: otomatik satırlar künyeden, diğerleri dosyadaki değerler.
  */
 function ciktiGetir(ad) {
   var kisi = kadroKisisi_(ad);
-  var oto = otoSayilar_(ad);
-  var sonuc = { oto: oto.sayilar, kaynaklar: oto.kaynaklar, kayitli: {}, sutunVar: false };
+  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
+  var oto = otoSayilar_(ad, kunyeVerileri_(ss));
+  var sonuc = { oto: oto.sayilar, otoSatirlar: OTO_SATIRLAR, kaynaklar: oto.kaynaklar, kayitli: {}, sutunVar: false };
   if (!kisi) return sonuc;
   var sh = ciktiSayfasi_();
   var sutun = kisiSutunu_(sh, kisi.kisa);
@@ -106,18 +119,21 @@ function ciktiGetir(ad) {
     if (v !== '' && v !== null) sonuc.kayitli[k.satir] = Number(v);
   });
   var not = sh.getRange(CIKTI.baslikSatiri, sutun).getNote();
-  sonuc.sonKayit = not || '';
+  sonuc.onay = (/Onaylandı: ([^\n]+)/.exec(not) || [])[1] || '';
   return sonuc;
 }
 
-/** Kişinin sütununa tüm kalemleri yazar (0 dahil). */
+/**
+ * Kişinin onayı: elle girilen kalemler yazılır; otomatik satırlar künyeden hesaplanır
+ * (formdan gelen değer dikkate alınmaz, böylece iki dosya hep tutarlı kalır).
+ */
 function ciktiKaydet(ad, degerler) {
   var kisi = kadroKisisi_(ad);
   if (!kisi) throw new Error('Çıktı sayıları tablosunda yalnızca bölüm kadrosunun sütunları vardır.');
-  var kalemler = tumKalemler_();
-  kalemler.forEach(function (k) {
+  tumKalemler_().forEach(function (k) {
+    if (OTO_SATIRLAR.indexOf(k.satir) !== -1) return;
     var v = degerler[k.satir];
-    if (v === undefined || v === null || String(v).trim() === '' || !/^\d+$/.test(String(v).trim())) {
+    if (v === undefined || v === null || !/^\d+$/.test(String(v).trim())) {
       throw new Error('"' + k.etiket + '" için 0 veya pozitif bir tam sayı giriniz.');
     }
   });
@@ -127,26 +143,114 @@ function ciktiKaydet(ad, degerler) {
     var sh = ciktiSayfasi_();
     var sutun = kisiSutunu_(sh, kisi.kisa);
     if (!sutun) throw new Error('Çıktı sayıları tablosunda "' + kisi.kisa + '" sütunu bulunamadı.');
-    kalemler.forEach(function (k) { sh.getRange(k.satir, sutun).setValue(Number(String(degerler[k.satir]).trim())); });
+    var ilk = KALEM_ILK, adet = KALEM_SON - KALEM_ILK + 1;
+    var rng = sh.getRange(ilk, sutun, adet, 1), v = rng.getValues();
+    tumKalemler_().forEach(function (k) {
+      if (OTO_SATIRLAR.indexOf(k.satir) === -1) v[k.satir - ilk][0] = Number(String(degerler[k.satir]).trim());
+    });
+    rng.setValues(v);
     var simdi = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm');
-    sh.getRange(CIKTI.baslikSatiri, sutun).setNote(kisi.ad + ' – form ile kaydedildi: ' + simdi);
+    sh.getRange(CIKTI.baslikSatiri, sutun).setNote(kisi.ad + '\nOnaylandı: ' + simdi);
     SpreadsheetApp.flush();
-    return { durum: 'tamam', sutun: sh.getRange(1, sutun).getA1Notation().replace(/\d+/, ''), tarih: simdi };
+  } finally {
+    kilit.releaseLock();
+  }
+  var es = ciktiEsitle_(); // otomatik satırları künyeyle eşitle (13. satır Scopus'a göre düzeltilir)
+  return { durum: 'tamam', tarih: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM.yyyy HH:mm'), esitlenen: es };
+}
+
+var KALEM_ILK = 9, KALEM_SON = 78;
+
+/**
+ * Tüm kadronun otomatik satırlarını künyeden yeniden hesaplayıp EEE_2026_Ciktilar'a yazar.
+ * Boş kalan elle girilecek kalemlere 0 yazar; "Ortalama" sütununa formül koyar.
+ * @return {string[]} değeri değişen kişilerin kısaltmaları
+ */
+function ciktiEsitle_() {
+  var kilit = LockService.getScriptLock();
+  kilit.waitLock(30000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
+    var veriler = kunyeVerileri_(ss);
+    var sh = ciktiSayfasi_();
+    var basliklar = sh.getRange(CIKTI.baslikSatiri, 1, 1, sh.getLastColumn()).getDisplayValues()[0];
+    var sutunlar = {};
+    basliklar.forEach(function (b, i) { sutunlar[String(b).trim().toLocaleUpperCase('tr')] = i + 1; });
+    var kisiler = KADRO.kisiler.filter(function (k) { return sutunlar[k.kisa.toLocaleUpperCase('tr')]; });
+    if (!kisiler.length) return [];
+    var nolar = kisiler.map(function (k) { return sutunlar[k.kisa.toLocaleUpperCase('tr')]; });
+    var c1 = Math.min.apply(null, nolar), c2 = Math.max.apply(null, nolar);
+    var adet = KALEM_SON - KALEM_ILK + 1;
+    var blok = sh.getRange(KALEM_ILK, c1, adet, c2 - c1 + 1);
+    var v = blok.getValues();
+    var kalemler = tumKalemler_();
+    var degisen = [];
+    kisiler.forEach(function (kisi, i) {
+      var j = nolar[i] - c1;
+      var oto = otoSayilar_(kisi.ad, veriler).sayilar;
+      var degisti = false;
+      var scopus = Number(v[10 - KALEM_ILK][j]) || 0;
+      kalemler.forEach(function (k) {
+        var eski = v[k.satir - KALEM_ILK][j], yeni;
+        if (OTO_SATIRLAR.indexOf(k.satir) !== -1) {
+          yeni = oto[k.satir] || 0;
+          if (k.satir === 13) yeni = Math.max(0, yeni - scopus); // Scopus'a taşınanlar "Diğer"den düşülür
+        } else {
+          yeni = (eski === '' || eski === null) ? 0 : eski;
+        }
+        if (eski !== yeni) { v[k.satir - KALEM_ILK][j] = yeni; degisti = true; }
+      });
+      if (degisti) degisen.push(kisi.kisa);
+    });
+    if (degisen.length) blok.setValues(v);
+    // Ortalama sütunu (varsa) boşsa formül
+    var ort = sutunlar['ORTALAMA'];
+    if (ort) {
+      var harf1 = sh.getRange(1, c1).getA1Notation().replace(/\d+/, ''), harf2 = sh.getRange(1, c2).getA1Notation().replace(/\d+/, '');
+      var oRng = sh.getRange(KALEM_ILK, ort, adet, 1), of = oRng.getFormulas(), ov = oRng.getValues(), yaz = false;
+      kalemler.forEach(function (k) {
+        var x = k.satir - KALEM_ILK;
+        if (!of[x][0] && (ov[x][0] === '' || ov[x][0] === null)) {
+          of[x][0] = '=IFERROR(ROUND(AVERAGE(' + harf1 + k.satir + ':' + harf2 + k.satir + '),2),"")'; yaz = true;
+        } else if (!of[x][0]) { of[x][0] = ov[x][0]; }
+      });
+      if (yaz) oRng.setFormulas(of.map(function (r) { return [typeof r[0] === 'string' ? r[0] : String(r[0])]; }));
+    }
+    SpreadsheetApp.flush();
+    return degisen;
   } finally {
     kilit.releaseLock();
   }
 }
 
+/** Hata kaydı bırakıp akışı bozmayan eşitleme (form kaydından sonra çağrılır). */
+function ciktiEsitleGuvenli_() {
+  try { return { esitlenen: ciktiEsitle_() }; } catch (e) { console.error('Çıktı eşitleme: ' + e.message); return { hata: e.message }; }
+}
+
+/** E-Tablo menüsü: tüm kadronun çıktı sayılarını künyeden günceller. */
+function ciktiEsitleMenu() {
+  var d = ciktiEsitle_();
+  SpreadsheetApp.getUi().alert('EEE_2026_Ciktilar güncellendi.\n\nDeğeri değişen: ' + (d.length ? d.join(', ') : 'yok (zaten güncel)'));
+}
+
+/** Künye sayfalarını bir kez okur. */
+function kunyeVerileri_(ss) {
+  var v = {};
+  ['yayin', 'patent', 'proje', 'bursTubitak', 'toplanti'].forEach(function (a) { v[a] = satirlar_(ss, a); });
+  return v;
+}
+
 // ---------------------------------------------------------------------------
 
-function otoSayilar_(ad) {
+function otoSayilar_(ad, veriler) {
   var ka = kisiAnahtar_(ad);
   var say = {};
   var kaynaklar = { bap: [], proje: [], burs: [], toplanti: [] };
   var ekle = function (satir) { say[satir] = (say[satir] || 0) + 1; };
-  var ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_());
+  if (!veriler) veriler = kunyeVerileri_(SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(tabloKimligi_()));
 
-  satirlar_(ss, 'yayin').forEach(function (r) {
+  veriler.yayin.forEach(function (r) {
     if (!(katla_(r.E) === ka.tam || iliskili_(r.J, ka))) return;
     if (r.B === 'Makale') {
       if (['SCI', 'SCIE', 'SSCI', 'AHCI'].indexOf(r.H) !== -1) ekle(9);
@@ -157,23 +261,23 @@ function otoSayilar_(ad) {
       ekle(r.F === 'Ulusal' ? 16 : 15);
     }
   });
-  satirlar_(ss, 'patent').forEach(function (r) {
+  veriler.patent.forEach(function (r) {
     if (katla_(r.D) !== ka.tam) return;
     if (/\(Uluslararası Patent\)\s*$/.test(r.E)) ekle(18);
     else if (/\(Faydalı Model\)\s*$/.test(r.E)) ekle(20);
     else if (/\(Tasarım\)\s*$/.test(r.E)) return;
     else ekle(19);
   });
-  satirlar_(ss, 'proje').forEach(function (r) {
+  veriler.proje.forEach(function (r) {
     if (!(katla_(r.G) === ka.tam || iliskili_(r.N, ka))) return;
     var hedef = PROJE_SATIRI[r.E];
     if (hedef) ekle(hedef);
     else kaynaklar[r.E === 'BAP' ? 'bap' : 'proje'].push(r.E + ': ' + r.F);
   });
-  satirlar_(ss, 'bursTubitak').forEach(function (r) {
+  veriler.bursTubitak.forEach(function (r) {
     if (katla_(r.C) === ka.tam) kaynaklar.burs.push('TÜBİTAK (' + r.D + '): ' + (r.G || 'başlıksız') + ' – ' + r.H);
   });
-  satirlar_(ss, 'toplanti').forEach(function (r) {
+  veriler.toplanti.forEach(function (r) {
     kaynaklar.toplanti.push(r.E + ' ' + r.D + ': ' + r.F + ' (' + r.H + ')');
   });
   return { sayilar: say, kaynaklar: kaynaklar };

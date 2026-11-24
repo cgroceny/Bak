@@ -134,6 +134,7 @@
   legend + .cikti-satir, .kaynak + .cikti-satir { border-top: 0; }
   .cikti-satir label { font-weight: 400; margin: 0; }
   .cikti-satir input { text-align: right; font-variant-numeric: tabular-nums; }
+  .cikti-satir input.oto { background: var(--accent-soft); border-color: transparent; color: var(--text); font-weight: 600; }
   .cikti-satir .ipucu { grid-column: 1 / -1; margin: 0; }
   .cikti-satir.hata-alan input { border-color: var(--err); background: var(--err-soft); }
   .kaynak { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 8px 10px; margin: 4px 0 8px; }
@@ -264,7 +265,7 @@ function sunucu(fn, args, ok, hata) {
         if (sat) oto[sat] = (oto[sat] || 0) + 1;
       });
       var kadrodan = KADRO.kisiler.some(function (k) { return katla(k.ad) === katla(ad); });
-      ok({ sutunVar: kadrodan, oto: oto, kayitli: demoCikti[katla(ad)] || {}, kaynaklar: { bap: [], proje: [], burs: [], toplanti: [] } });
+      ok({ sutunVar: kadrodan, oto: oto, otoSatirlar: [9, 11, 12, 13, 15, 16, 18, 19, 20, 25, 31, 32, 33, 34, 35, 36, 37, 38, 40, 43, 70, 71], kayitli: demoCikti[katla(ad)] || {}, kaynaklar: { bap: [], proje: [], burs: [], toplanti: [] } });
     } else if (fn === 'ciktiKaydet') {
       demoCikti[katla(ad)] = args[1]; ok({ durum: 'tamam' });
     }
@@ -950,7 +951,7 @@ function sonucMesaji(r) {
 function ciktiAdimi(i) {
   var p = el('section', { class: 'panel' });
   p.appendChild(adimBasligi(i));
-  p.appendChild(el('div', { class: 'uyari', text: 'EEE_2026_Ciktilar dosyasındaki sütununuz. Her kalem için bir sayı bekleniyor; yoksa 0. Künyeye girdiğiniz makale, kitap, patent ve türü belli projeler otomatik sayıldı. Künyede olmayan kalemler (katılım, teknopark, burs türleri vb.) 0 olarak geldi; varsa düzeltiniz.' }));
+  p.appendChild(el('div', { class: 'uyari', text: 'EEE_2026_Ciktilar dosyasındaki sütununuz. Her kalem için bir sayı bekleniyor; yoksa 0. “Künyeden” işaretli satırlar önceki adımlarda girdiğiniz kayıtlardan otomatik hesaplanır ve dosyaya zaten yazılmıştır; değiştirmek için ilgili adımdaki kaydı düzeltin. Künyede karşılığı olmayan kalemleri (Scopus, BAP alt türü, katılım, teknopark, burslar vb.) siz girin ve onaylayın.' }));
   var yuk = el('p', { class: 'bos', text: 'Çıktı sayılarınız hesaplanıyor…' });
   p.appendChild(yuk);
   $('icerik').appendChild(p);
@@ -964,7 +965,13 @@ function ciktiAdimi(i) {
       ]));
       return;
     }
-    if (r.sonKayit) p.appendChild(el('div', { class: 'ipucu', text: 'Son kayıt: ' + r.sonKayit.replace(/^.*?– /, '') }));
+    p.appendChild(el('div', { class: 'ipucu', text: r.onay ? 'Son onayınız: ' + r.onay : 'Henüz onaylamadınız.' }));
+    var otoSatir = {}; (r.otoSatirlar || []).forEach(function (x) { otoSatir[x] = true; });
+    function digerGuncelle() {
+      if (!girdiler[13] || !girdiler[10]) return;
+      var sc = Number(girdiler[10].value) || 0;
+      girdiler[13].value = String(Math.max(0, (r.oto[13] || 0) - sc));
+    }
     var girdiler = {};
     var kaynakBaslik = { bap: 'Künyedeki BAP projeleriniz (alt türünü aşağıda işaretleyin)', proje: 'Künyedeki "DİĞER" türündeki projeleriniz', burs: 'Künyedeki TÜBİTAK burslarınız', toplanti: 'Bölümün künyedeki etkinlikleri' };
     VERI.cikti.forEach(function (g) {
@@ -983,20 +990,23 @@ function ciktiAdimi(i) {
       g.kalemler.forEach(function (k) {
         var oto = r.oto[k.satir] || 0;
         var kayitli = r.kayitli[k.satir];
-        var deger = kayitli !== undefined ? kayitli : oto;
+        var otomatik = !!otoSatir[k.satir];
+        var deger = otomatik ? oto : (kayitli !== undefined ? kayitli : 0);
         var id = 'c' + k.satir;
-        var inp = el('input', { id: id, type: 'number', min: '0', step: '1', inputmode: 'numeric', value: String(deger), required: true });
+        var inp = el('input', { id: id, type: 'number', min: '0', step: '1', inputmode: 'numeric', value: String(deger), required: true,
+          readonly: otomatik ? true : undefined, 'aria-readonly': otomatik ? 'true' : undefined, class: otomatik ? 'oto' : undefined });
         girdiler[k.satir] = inp;
         var ipuclari = el('div', { class: 'ipucu' });
-        if (oto) ipuclari.appendChild(el('span', { class: 'rozet bilgi', text: 'Künyeden: ' + oto }));
-        if (kayitli !== undefined && kayitli !== oto && oto) ipuclari.appendChild(el('span', { class: 'rozet', text: 'Kayıtlı değer künyeden farklı' }));
-        if (k.ipucu) ipuclari.appendChild(document.createTextNode(k.ipucu));
+        if (otomatik) ipuclari.appendChild(el('span', { class: 'rozet bilgi', text: 'Künyeden' + (k.satir === 13 ? ' (Scopus’a girdikleriniz düşülür)' : '') }));
+        if (k.ipucu && !otomatik) ipuclari.appendChild(document.createTextNode(k.ipucu));
+        if (k.satir === 10) inp.addEventListener('input', digerGuncelle);
         kutu.appendChild(el('div', { class: 'cikti-satir' }, [
           el('label', { for: id, text: k.etiket }), inp, ipuclari.childNodes.length ? ipuclari : null
         ]));
       });
       p.appendChild(kutu);
     });
+    digerGuncelle();
     var mesaj = el('div', { 'aria-live': 'polite' });
     var kaydetBtn = el('button', { class: 'btn ana', type: 'button', text: 'Onayla ve kaydet →' });
     kaydetBtn.onclick = function () {

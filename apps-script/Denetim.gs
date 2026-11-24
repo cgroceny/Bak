@@ -101,7 +101,7 @@ function mukerrerDenetle(isaretle) {
 
   // Kişi bazında durum ve künye–çıktı sayıları tutarlılığı (yalnızca bölüm kadrosu)
   var ciktiSh = null;
-  try { ciktiSh = ciktiSayfasi_(); } catch (e) { rapor.ciktiHata = e.message; }
+  try { ciktiEsitle_(); ciktiSh = ciktiSayfasi_(); } catch (e) { rapor.ciktiHata = e.message; }
   var kalemEtiket = {};
   tumKalemler_().forEach(function (k) { kalemEtiket[k.satir] = k.etiket; });
   var kayitlar = {};
@@ -123,9 +123,10 @@ function mukerrerDenetle(isaretle) {
         var degerler = ciktiSh.getRange(1, sutun, 80, 1).getValues();
         var dolu = tumKalemler_().filter(function (k) { var x = degerler[k.satir - 1][0]; return x !== '' && x !== null; }).length;
         var toplam = tumKalemler_().length;
-        durum.cikti = dolu === 0 ? 'girilmedi' : dolu < toplam ? 'eksik (' + dolu + '/' + toplam + ')' : 'tamam';
+        var onay = (/Onaylandı: ([^\n]+)/.exec(ciktiSh.getRange(CIKTI.baslikSatiri, sutun).getNote()) || [])[1];
+        durum.cikti = dolu === 0 ? 'girilmedi' : dolu < toplam ? 'eksik (' + dolu + '/' + toplam + ')' : onay ? 'onaylandı (' + onay + ')' : 'künyeden dolduruldu, kişi onayı bekleniyor';
         if (dolu) {
-          var oto = otoSayilar_(kisi.ad).sayilar;
+          var oto = otoSayilar_(kisi.ad, kayitlar).sayilar;
           Object.keys(oto).forEach(function (satir) {
             var kayitli = degerler[Number(satir) - 1][0];
             if (kayitli !== '' && kayitli !== null && Number(kayitli) < oto[satir]) {
