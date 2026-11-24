@@ -339,7 +339,7 @@ function kaydet(anahtar, veri) {
     // Mükerrer kontrolü: aynı kayıt ikinci kez girilemez. Ortak yazar / araştırmacı girmeye
     // çalışırsa yeni satır açılmaz, adı mevcut satırın ortak sütununa eklenir.
     var es = tekrarBul_(sh, s, ilk, son, veri);
-    if (es) {
+    if (es && !es.benzer) {
       var sonucT = tekrarDurumu_(s, es, gonderen);
       sonucT.sayfa = s.sayfa;
       if (sonucT.durum === 'ortakEklenebilir') {
@@ -521,18 +521,35 @@ function anahtarDeger_(s, c, v) {
   return katla_(v).replace(/\s+/g, ''); // "T.Ü.B.A." ile "TÜBA" aynı sayılır
 }
 
-/** İki yayın künyesi aynı yayın mı? (DOI ya da başlık) */
+var ETKISIZ_KELIMELER = ['the', 'and', 'for', 'with', 'from', 'via', 'using', 'based', 'bir', 've', 'ile', 'icin', 'uzerine', 'olarak'];
+
+/** Başlık kelime benzerliği (0–1): ortak anlamlı kelimelerin uzun başlığa oranı. */
+function benzerlik_(a, b) {
+  var kel = function (t) { return String(t).split(' ').filter(function (w) { return w.length > 2 && ETKISIZ_KELIMELER.indexOf(w) === -1; }); };
+  var A = kel(a), B = kel(b);
+  if (A.length < 5 || B.length < 5) return 0;
+  var kume = {};
+  B.forEach(function (w) { kume[w] = true; });
+  var ortak = {};
+  A.forEach(function (w) { if (kume[w]) ortak[w] = true; });
+  return Object.keys(ortak).length / Math.max(A.length, B.length);
+}
+
+/** İki yayın künyesi aynı yayın mı? (DOI, başlık, başlığın bir kısmı ya da %85+ kelime benzerliği) */
 function yayinEsit_(yeni, e) {
   return (yeni.doi && yeni.doi === e.doi) ||
     (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
     yeni.tum === e.tum ||
     (yeni.baslik.length >= 20 && e.tum.indexOf(yeni.baslik) !== -1) ||
-    (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1);
+    (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1) ||
+    (!yeni.baslik && yeni.tum.length >= 25 && e.tum.indexOf(yeni.tum) !== -1) ||
+    benzerlik_(yeni.baslik || yeni.tum, e.baslik || e.tum) >= 0.85;
 }
 
 /**
  * Aynı kaydı arar (haric: kendisiyle karşılaştırılmayacak satır).
- * @return {Object|null} {satir, giren, ortak}
+ * Kesin eşleşme yoksa yayın/proje/etkinlik adlarında %60+ benzer kaydı {benzer: true} ile döndürür.
+ * @return {Object|null} {satir, giren, ortak, ozet, benzer}
  */
 function tekrarBul_(sh, s, ilk, son, veri, haric) {
   var kols = anahtarSutunlari_(s);
@@ -542,24 +559,31 @@ function tekrarBul_(sh, s, ilk, son, veri, haric) {
   var v = sh.getRange(ilk, 1, n, genislik).getDisplayValues();
   var sahip = sahipSutunlari_(s)[0];
   var yayin = s.anahtar === 'yayin' ? kunyeImza_(veri[kols[0]]) : null;
+  var tekMetin = !yayin && kols.length === 1 ? katla_(veri[kols[0]]) : null;
   var yeni = kols.map(function (c) { return anahtarDeger_(s, c, veri[c]); });
+  var enIyi = null, enIyiOran = 0;
   for (var i = 0; i < n; i++) {
     if (ilk + i === haric) continue;
     var r = v[i];
     var hucre = function (c) { return r[sutunNo_(c) - 1]; };
     if (!String(hucre(kols[0])).trim()) continue;
-    var esit = yayin ? yayinEsit_(yayin, kunyeImza_(hucre(kols[0])))
+    var mevcutImza = yayin ? kunyeImza_(hucre(kols[0])) : null;
+    var esit = yayin ? yayinEsit_(yayin, mevcutImza)
       : kols.every(function (c, j) { return anahtarDeger_(s, c, hucre(c)) === yeni[j]; });
-    if (esit) {
-      return { satir: ilk + i, giren: sahip ? hucre(sahip) : '', ortak: s.ortakSutun ? hucre(s.ortakSutun) : '' };
-    }
+    var kayit = { satir: ilk + i, giren: sahip ? hucre(sahip) : '', ortak: s.ortakSutun ? hucre(s.ortakSutun) : '', ozet: String(hucre(kols[0])).slice(0, 220) };
+    if (esit) return kayit;
+    var oran = yayin ? benzerlik_(yayin.baslik || yayin.tum, mevcutImza.baslik || mevcutImza.tum)
+      : tekMetin ? benzerlik_(tekMetin, katla_(hucre(kols[0]))) : 0;
+    if (oran >= 0.6 && oran > enIyiOran) { enIyiOran = oran; enIyi = kayit; }
   }
-  return null;
+  if (enIyi) { enIyi.benzer = true; enIyi.oran = Math.round(enIyiOran * 100); }
+  return enIyi;
 }
 
 /** Bulunan mükerrer için gönderene göre durum. */
 function tekrarDurumu_(s, es, gonderen) {
-  var r = { durum: 'tekrar', satir: es.satir, giren: es.giren };
+  var r = { durum: 'tekrar', satir: es.satir, giren: es.giren, ozet: es.ozet };
+  if (es.benzer) { r.durum = 'benzer'; r.oran = es.oran; return r; }
   if (gonderen) {
     var ka = kisiAnahtar_(gonderen);
     if (es.giren && katla_(es.giren) === ka.tam) r.durum = 'zatenSizin';

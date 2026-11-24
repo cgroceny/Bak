@@ -23,6 +23,7 @@ function onEdit(e) {
       var ar = tabloAraligi_(ss, sh, s), ilk = ar.getRow(), son = ilk + ar.getNumRows() - 1;
       for (var satir = Math.max(r1, ilk); satir <= Math.min(r2, son); satir++) {
         var bulunan = satirMukerrerMi_(sh, s, ilk, son, satir);
+        if (bulunan && bulunan.benzer) bulunan = null;
         var hucre = sh.getRange(satir, sutunNo_(kols[0]));
         var not = hucre.getNote();
         if (bulunan) {

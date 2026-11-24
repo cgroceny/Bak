@@ -108,6 +108,7 @@
   .kisi-cubuk { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
   .kisi-cubuk .linkbtn { margin: 0; }
   .kisi-cubuk .bolum { color: var(--muted); font-size: 13.5px; }
+  .kisi-cubuk .kisi-ozet { color: var(--ok); font-size: 13.5px; font-weight: 600; }
   .adimlar { display: flex; gap: 6px; overflow-x: auto; padding: 12px 2px 4px; scrollbar-width: thin; }
   .adim { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--muted);
     border-radius: 999px; padding: 5px 12px 5px 5px; font: inherit; font-size: 13px; cursor: pointer; }
@@ -174,6 +175,7 @@
 
   <div class="kisi-cubuk" id="kisiCubuk" hidden>
     <span aria-hidden="true">👤</span><b id="kisiAdi"></b><span class="bolum" id="kisiBolum"></span>
+    <span class="kisi-ozet" id="kisiOzet"></span>
     <button class="linkbtn" type="button" id="kisiDegistir">Kişiyi değiştir</button>
   </div>
   <nav class="adimlar" id="adimlar" aria-label="Adımlar" hidden></nav>
@@ -664,7 +666,16 @@ function basla() {
 }
 
 function kayitlariYukle(ok, hata) {
-  sunucu('kisiKayitlari', [D.ad], function (r) { D.kayitlar = r || {}; ok && ok(); }, hata || function () {});
+  sunucu('kisiKayitlari', [D.ad], function (r) { D.kayitlar = r || {}; kisiOzetiCiz(); ok && ok(); }, hata || function () {});
+}
+
+function kisiOzetiCiz() {
+  var parcalar = [], toplam = 0;
+  SEMA.forEach(function (s) {
+    var n = kisiKayitSayisi(s.anahtar);
+    if (n) { toplam += n; parcalar.push(s.baslik + ' ' + n); }
+  });
+  $('kisiOzet').textContent = toplam ? '· Tabloda adınıza ' + toplam + ' kayıt var (' + parcalar.join(', ') + ')' : '· Tabloda adınıza kayıt yok';
 }
 
 function kisiKayitSayisi(anahtar) {
@@ -854,15 +865,21 @@ function formOlustur(s, kaydedildi) {
     kaydetBtn.textContent = varsayilanMetin;
     if (!r || r.durum === 'yok') return;
     var yer = r.satir + '. satır' + (r.giren ? ', giren: ' + r.giren : '');
+    var kunyeGoster = r.ozet ? el('div', { class: 'ipucu', style: 'margin-top:6px', text: 'Tablodaki kayıt: ' + r.ozet }) : null;
+    if (r.durum === 'benzer') {
+      kontrolKutu.appendChild(el('div', { class: 'mesaj tekrar' }, [
+        el('div', { text: 'Tabloda buna çok benzeyen bir kayıt var (' + yer + ', %' + r.oran + ' benzer). Aynı kayıtsa tekrar girmeyin; farklıysa kaydedebilirsiniz.' }), kunyeGoster]));
+      return;
+    }
     if (r.durum === 'ortakEklenebilir') {
-      kontrolKutu.appendChild(el('div', { class: 'mesaj tekrar', text: 'Bu kayıt tabloda zaten var (' + yer + '). Kaydederseniz yeni satır açılmaz; adınız mevcut kayda ortak olarak eklenir.' }));
+      kontrolKutu.appendChild(el('div', { class: 'mesaj tekrar' }, [el('div', { text: 'Bu kayıt tabloda zaten var (' + yer + '). Kaydederseniz yeni satır açılmaz; adınız mevcut kayda ortak olarak eklenir.' }), kunyeGoster]));
       kaydetBtn.textContent = 'Ortak olarak ekle';
       return;
     }
     var metin = r.durum === 'zatenSizin' ? 'Bu kaydı daha önce girmişsiniz (' + yer + ').'
       : r.durum === 'zatenOrtak' ? 'Bu kayıt tabloda var ve adınız ortak olarak kayıtlı (' + yer + ').'
       : 'Bu kayıt tabloda zaten var (' + yer + ').';
-    kontrolKutu.appendChild(el('div', { class: 'mesaj hata', text: '⚠ Mükerrer: ' + metin + ' Tekrar girilemez.' }));
+    kontrolKutu.appendChild(el('div', { class: 'mesaj hata' }, [el('div', { text: '⚠ Mükerrer: ' + metin + ' Tekrar girilemez.' }), kunyeGoster]));
     kaydetBtn.disabled = true;
   }
   function anlikKontrol() {
@@ -924,7 +941,7 @@ function sonucMesaji(r) {
     case 'ortakEklendi': return { tur: 'ok', metin: '✓ Bu kayıt ' + (r.giren || 'başka bir öğretim elemanı') + ' tarafından zaten girilmiş (' + yer + '). Yeni satır açılmadı; adınız ortak olarak eklendi.' };
     case 'zatenSizin': return { tur: 'tekrar', metin: 'Bu kaydı daha önce girmişsiniz (' + yer + '). Tekrar girilmedi.' };
     case 'zatenOrtak': return { tur: 'tekrar', metin: 'Bu kayıt ' + (r.giren || 'başka bir öğretim elemanı') + ' tarafından girilmiş ve adınız ortak olarak zaten kayıtlı (' + yer + '). Tekrar girilmedi.' };
-    case 'tekrar': return { tur: 'tekrar', metin: 'Bu kayıt tabloda zaten var (' + yer + (r.giren ? ', giren: ' + r.giren : '') + '). Mükerrer kayıt engellendi.' };
+    case 'tekrar': return { tur: 'tekrar', metin: 'Bu kayıt tabloda zaten var (' + yer + (r.giren ? ', giren: ' + r.giren : '') + '). Mükerrer kayıt engellendi.' + (r.ozet ? ' Tablodaki kayıt: ' + r.ozet : '') };
     default: return { tur: 'hata', metin: 'Beklenmeyen yanıt.' };
   }
 }
