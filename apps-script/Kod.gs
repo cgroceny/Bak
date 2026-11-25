@@ -547,8 +547,16 @@ function benzerlik_(a, b) {
 
 /** İki yayın künyesi aynı yayın mı? (DOI, başlık, başlığın bir kısmı ya da %85+ kelime benzerliği) */
 function yayinEsit_(yeni, e) {
-  return (yeni.doi && yeni.doi === e.doi) ||
-    (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
+  if (yeni.doi && yeni.doi === e.doi) {
+    // DOI aynı ama iki tarafta da başlık var ve birbirine hiç benzemiyorsa DOI hatalı girilmiştir
+    // (ör. YÖK Akademik'te iki bildiriye aynı DOI yazılmış); karar başlığa göre verilir.
+    var a = yeni.baslik, b = e.baslik;
+    if (!(a.length >= 15 && b.length >= 15) || a.indexOf(b) !== -1 || b.indexOf(a) !== -1 || benzerlik_(a, b) >= 0.5) return true;
+  }
+  // Boşluk/tire farkını yok say: "Multi-Agent" = "Multiagent"
+  var sa = (yeni.baslik || '').replace(/\s+/g, ''), sb = (e.baslik || '').replace(/\s+/g, '');
+  if (sa.length >= 20 && sb.length >= 20 && (sa === sb || sa.indexOf(sb) !== -1 || sb.indexOf(sa) !== -1)) return true;
+  return (yeni.baslik.length >= 15 && yeni.baslik === e.baslik) ||
     yeni.tum === e.tum ||
     (yeni.baslik.length >= 20 && e.tum.indexOf(yeni.baslik) !== -1) ||
     (e.baslik.length >= 20 && yeni.tum.indexOf(e.baslik) !== -1) ||

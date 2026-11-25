@@ -87,7 +87,7 @@ function yayinlariGetir(ad, yil, orcid) {
     if (k.veri.B !== 'Makale') hedef.B = k.veri.B;
     if (k.veri.D) hedef.D = k.veri.D;
     if (!kayitlar[i].doi && k.doi) kayitlar[i].doi = k.doi;
-    kayitlar[i].kaynak += ' + YÖK';
+    if (kayitlar[i].kaynak.indexOf('YÖK') === -1) kayitlar[i].kaynak += ' + YÖK';
     yokZengin++;
   });
 
