@@ -28,27 +28,28 @@ var BOLUMLER = [
  * Elektrik-Elektronik Mühendisliği akademik kadrosu (formda "adınızı seçin" listesi).
  * Kaynak: https://eee.ikcu.edu.tr/Personel/Akademik/1048 (23.11.2026).
  * kisa: EEE_2026_Ciktilar dosyasında kişinin sütun başlığı (7. satır).
+ * yok: YÖK Akademik profil kimliği (authorGuidId); orcid: YÖK Akademik'te kayıtlı ORCID.
  * Kadro değiştiğinde bu listeyi güncelleyiniz. Listede olmayanlar adını elle yazabilir.
  */
 var KADRO = {
   bolum: 'Elektrik Elektronik Müh.',
   kisiler: [
-    { unvan: 'Prof. Dr.', ad: 'Adnan Kaya', kisa: 'AK', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Prof. Dr.', ad: 'Merih Palandöken', kisa: 'MP', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Prof. Dr.', ad: 'Savaş Şahin', kisa: 'SŞ', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Doç. Dr.', ad: 'Kamil Çetin', kisa: 'KÇ', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Doç. Dr.', ad: 'Mehmet Erdal Özbek', kisa: 'MEÖ', abd: 'Telekomünikasyon' },
-    { unvan: 'Doç. Dr.', ad: 'Volkan Kılıç', kisa: 'VK', abd: 'Devreler ve Sistemler' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Erhan Demirok', kisa: 'ED', abd: 'Elektrik Tesisleri' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Meryem Deniz', kisa: 'MD', abd: 'Elektronik' },
-    { unvan: 'Dr. Öğr. Üyesi', ad: 'Saadet Simay Göztepe', kisa: 'SSY', abd: 'Telekomünikasyon' },
-    { unvan: 'Öğr. Gör. Dr.', ad: 'Ferhat Bayram', kisa: 'FB', abd: 'Elektrik Makinaları' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'Cem Göçen', kisa: 'CG', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'İsmail Akdağ', kisa: 'İA', abd: 'Devreler ve Sistemler' },
-    { unvan: 'Arş. Gör. Dr.', ad: 'Mehmet Uğur Soydemir', kisa: 'MUS', abd: 'Kontrol ve Kumanda Sistemleri' },
-    { unvan: 'Arş. Gör.', ad: 'Burcu Barış', kisa: 'BB', abd: 'Telekomünikasyon' },
-    { unvan: 'Arş. Gör.', ad: 'Mehmet İhsan Hekimhan', kisa: 'MİH', abd: 'Elektrik Makinaları' },
-    { unvan: 'Arş. Gör.', ad: 'Onur Karadal', kisa: 'OK', abd: 'Telekomünikasyon' }
+    { unvan: 'Prof. Dr.', ad: 'Adnan Kaya', kisa: 'AK', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği', yok: '816B387913F8BD7C', orcid: '0000-0002-9943-6925' },
+    { unvan: 'Prof. Dr.', ad: 'Merih Palandöken', kisa: 'MP', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği', yok: '1D336E0817FEFB4F', orcid: '0000-0003-3487-2467' },
+    { unvan: 'Prof. Dr.', ad: 'Savaş Şahin', kisa: 'SŞ', abd: 'Kontrol ve Kumanda Sistemleri', yok: 'C764F3BB8D03F33C', orcid: '0000-0003-2065-6907' },
+    { unvan: 'Doç. Dr.', ad: 'Kamil Çetin', kisa: 'KÇ', abd: 'Kontrol ve Kumanda Sistemleri', yok: '8872EB0F1FCA51F3', orcid: '0000-0003-1029-5626' },
+    { unvan: 'Doç. Dr.', ad: 'Mehmet Erdal Özbek', kisa: 'MEÖ', abd: 'Telekomünikasyon', yok: 'D33475C64399EDC1', orcid: '0000-0001-5840-7960' },
+    { unvan: 'Doç. Dr.', ad: 'Volkan Kılıç', kisa: 'VK', abd: 'Devreler ve Sistemler', yok: 'C0459C317DE0F9F0', orcid: '0000-0002-3164-1981' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Erhan Demirok', kisa: 'ED', abd: 'Elektrik Tesisleri', yok: 'E0633DBCE0660722', orcid: '0000-0003-3078-6158' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Meryem Deniz', kisa: 'MD', abd: 'Elektronik', yok: '27EC25D5E6054468', orcid: '0000-0001-5677-9584' },
+    { unvan: 'Dr. Öğr. Üyesi', ad: 'Saadet Simay Göztepe', digerAdlar: ['Saadet Simay Yılmaz'], kisa: 'SSY', abd: 'Telekomünikasyon', yok: 'EB5F964185CED966', orcid: '0000-0002-7385-6614' },
+    { unvan: 'Öğr. Gör. Dr.', ad: 'Ferhat Bayram', kisa: 'FB', abd: 'Elektrik Makinaları', yok: 'C869A34D33C81EAD', orcid: '0000-0003-0659-3524' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Cem Göçen', kisa: 'CG', abd: 'Elektromanyetik Alanlar ve Mikrodalga Tekniği', yok: 'B0CA290F7C17E162', orcid: '0000-0002-8086-5690' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'İsmail Akdağ', kisa: 'İA', abd: 'Devreler ve Sistemler', yok: '3783120E04C277C6', orcid: '0000-0001-6470-5892' },
+    { unvan: 'Arş. Gör. Dr.', ad: 'Mehmet Uğur Soydemir', kisa: 'MUS', abd: 'Kontrol ve Kumanda Sistemleri', yok: 'C46D10BC3A17D9C8' },
+    { unvan: 'Arş. Gör.', ad: 'Burcu Barış', kisa: 'BB', abd: 'Telekomünikasyon', yok: '6D518E6FED86777A', orcid: '0000-0001-7055-4728' },
+    { unvan: 'Arş. Gör.', ad: 'Mehmet İhsan Hekimhan', kisa: 'MİH', abd: 'Elektrik Makinaları', yok: 'FB72529F2CFFB227' },
+    { unvan: 'Arş. Gör.', ad: 'Onur Karadal', kisa: 'OK', abd: 'Telekomünikasyon', yok: '0BD828A6EA7DFA22', orcid: '0009-0006-1568-3168' }
   ]
 };
 

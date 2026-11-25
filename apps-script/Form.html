@@ -469,7 +469,7 @@ function iceAktarPanel(s, form, yenile) {
   var alan = function (c) { return s.alanlar.filter(function (a) { return a.sutun === c; })[0]; };
   var kutu = el('div', { class: 'aktar' });
   kutu.appendChild(el('h3', { text: '⚡ Yayınlarınızı otomatik ekleyin' }));
-  kutu.appendChild(el('div', { class: 'ipucu', text: 'Yayın ve bildirileriniz OpenAlex’ten (İKÇÜ adresli, DOI’li) ve ORCID profilinizden (DOI’siz ulusal bildiri, özet ve posterler dahil) alınır; künye APA formatında hazırlanır. Kaydetmeden önce kontrol edip seçersiniz. ORCID profilinizi güncel tutarsanız bildirileriniz de otomatik gelir.' }));
+  kutu.appendChild(el('div', { class: 'ipucu', text: 'Yayın ve bildirileriniz YÖK Akademik profilinizden, OpenAlex’ten (İKÇÜ adresli, DOI’li) ve ORCID profilinizden alınır; indeks, ulusal/uluslararası ve bildiri türü YÖK Akademik’teki bilgiyle doldurulur; künye APA formatında hazırlanır. Kaydetmeden önce kontrol edip seçersiniz. ORCID profilinizi güncel tutarsanız bildirileriniz de otomatik gelir.' }));
 
   var yilInput = el('input', { type: 'number', id: 'aktarYil', value: buYil, min: '2000', max: String(buYil + 1) });
   var getirBtn = el('button', { class: 'btn ana', type: 'button', text: 'Yayınlarımı getir' });
@@ -511,7 +511,8 @@ function iceAktarPanel(s, form, yenile) {
       }
       var bilgi = r.yazarlar.map(function (y) { return y.ad + ' (' + y.yayin + ' yayın)'; }).join(', ');
       var ks = r.kaynakSayilari || {};
-      var kaynakMetni = ' (OpenAlex: ' + (ks.openalex || 0) + (r.orcidler && r.orcidler.length ? ', ORCID’den ek: ' + (ks.orcid || 0) : ', ORCID kaydı bulunamadı') + ')';
+      var kaynakMetni = ' (OpenAlex: ' + (ks.openalex || 0) + (r.orcidler && r.orcidler.length ? ', ORCID’den ek: ' + (ks.orcid || 0) : '') +
+        (r.yokTarih ? ', YÖK Akademik’ten ek: ' + (ks.yok || 0) + (ks.yokZengin ? ', YÖK ile tamamlanan: ' + ks.yokZengin : '') + ' · YÖK verisi ' + r.yokTarih + ' tarihli' : '') + ')';
       listele(r.kayitlar, (bilgi ? 'Bulunan profil: ' + bilgi + ' · ' : '') + yilInput.value + ' yılında ' + r.kayitlar.length + ' yayın' + kaynakMetni + '.' +
         (r.orcidHata ? ' ORCID’e şu an ulaşılamadı.' : ''));
     }, function (h) { bitti(); hataGoster(h); });

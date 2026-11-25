@@ -29,17 +29,26 @@ function yayinlariGetir(ad, yil, orcid) {
   yazarlar.forEach(function (a) { var o = orcidNo_(a.orcid); if (o && orcidler.indexOf(o) === -1) orcidler.push(o); });
   var oParam = orcidNo_(orcid);
   if (oParam && orcidler.indexOf(oParam) === -1) orcidler.push(oParam);
-  if (!yazarlar.length && !orcidler.length) {
+  var kadroKisi = kadroKisisi_(ad);
+  var oKadro = kadroKisi ? orcidNo_(kadroKisi.orcid) : '';
+  if (oKadro && orcidler.indexOf(oKadro) === -1) orcidler.push(oKadro);
+  var yokListe = yokKisiKayitlari_(ad).filter(function (x) { return Number(x.yil) === yil; });
+  if (!yazarlar.length && !orcidler.length && !yokListe.length) {
     return { yazarlar: [], kayitlar: [], bulunamadi: true };
   }
   var idler = yazarlar.map(function (a) { return kisaId_(a.id); });
   var mevcut = mevcutYayinlar_();
   var kayitlar = [];
   var eklenmis = []; // tekilleştirme için imzalar
+  function imzaOf(k) { return { doi: String(k.doi || '').toLowerCase(), baslik: katla_(k.baslik), tum: katla_(k.baslik) }; }
+  function esiBul(k) {
+    var imza = imzaOf(k);
+    for (var i = 0; i < eklenmis.length; i++) if (yayinEsit_(imza, eklenmis[i])) return i;
+    return -1;
+  }
   function ekle(k) {
-    var imza = { doi: String(k.doi || '').toLowerCase(), baslik: katla_(k.baslik), tum: katla_(k.baslik) };
-    if (eklenmis.some(function (e) { return yayinEsit_(imza, e); })) return false;
-    eklenmis.push(imza);
+    if (esiBul(k) !== -1) return false;
+    eklenmis.push(imzaOf(k));
     kayitlar.push(k);
     return true;
   }
@@ -65,12 +74,96 @@ function yayinlariGetir(ad, yil, orcid) {
     } catch (e) { orcidHata = e.message; }
   });
 
+  // 3) YÖK Akademik (bölüm kadrosunun açık profillerinden alınmış veri). Aynı yayın başka kaynaktan
+  // geldiyse YÖK'teki indeks, kapsam (ulusal/uluslararası) ve bildiri türü esas alınır.
+  var yokSayi = 0, yokZengin = 0;
+  yokListe.forEach(function (x) {
+    var k = yokKayit_(x, ad, mevcut);
+    var i = esiBul(k);
+    if (i === -1) { ekle(k); yokSayi++; return; }
+    var hedef = kayitlar[i].veri;
+    if (k.veri.H) hedef.H = k.veri.H;
+    hedef.F = k.veri.F;
+    if (k.veri.B !== 'Makale') hedef.B = k.veri.B;
+    if (k.veri.D) hedef.D = k.veri.D;
+    if (!kayitlar[i].doi && k.doi) kayitlar[i].doi = k.doi;
+    kayitlar[i].kaynak += ' + YÖK';
+    yokZengin++;
+  });
+
   return {
     yazarlar: yazarlar.map(function (a) { return { id: kisaId_(a.id), ad: a.display_name, yayin: a.works_count }; }),
     orcidler: orcidler,
-    kaynakSayilari: { openalex: oaSayi, orcid: orcidSayi },
+    kaynakSayilari: { openalex: oaSayi, orcid: orcidSayi, yok: yokSayi, yokZengin: yokZengin },
+    yokTarih: typeof YOK_VERI !== 'undefined' ? YOK_VERI.tarih : '',
     orcidHata: orcidHata,
     kayitlar: kayitlar
+  };
+}
+
+// ---------------------------------------------------------------------------
+// YÖK Akademik
+// ---------------------------------------------------------------------------
+// YÖK Akademik'in açık bir API'si yoktur ve servisi tarayıcı dışı istekleri engeller.
+// Bu nedenle bölüm kadrosunun herkese açık profilleri tarayıcıyla açılıp görünen yayın
+// listeleri araclar/yok_topla.js ile toplanır ve YokVeri.gs (YOK_VERI) olarak eklenir.
+
+var YOK_TUR = { 'tam metin bildiri': 'Tam Bildiri', 'ozet bildiri': 'Sözlü (Özet) Bildiri', 'poster': 'Poster',
+  'bilimsel kitap': 'Kitap', 'kitap bolumu': 'Kitap Bölümü', 'kitapta bolum': 'Kitap Bölümü' };
+var YOK_INDEKS = { 'sci expanded': 'SCIE', 'sci': 'SCI', 'ssci': 'SSCI', 'ahci': 'AHCI', 'esci': 'ESCI', 'tr dizin': 'TR Dizin' };
+
+function yokKisiKayitlari_(ad) {
+  if (typeof YOK_VERI === 'undefined') return [];
+  var kisi = kadroKisisi_(ad);
+  return (kisi && YOK_VERI.kisiler[kisi.ad]) || [];
+}
+
+/** "ÇETİN KAMİL" / "Turun Mehmet Haktan" → "Kamil Çetin" / "Mehmet Haktan Turun" (kadrodaysa kadrodaki yazım). */
+/** YÖK'ün "SOYAD AD" yazımında soyadı/ad ayrımı belirsiz kalan bilinen ortak yazarlar. */
+var YOK_AD_DUZELT = { 'kartal cetin bilge': 'Bilge Kartal Çetin' };
+
+function yokYazar_(ham) {
+  var t = String(ham || '').trim().split(/\s+/).filter(Boolean);
+  if (!t.length) return '';
+  if (YOK_AD_DUZELT[katla_(t.join(' '))]) return YOK_AD_DUZELT[katla_(t.join(' '))];
+  var siralı = katla_(t.join(' ')).split(' ').sort().join(' ');
+  for (var i = 0; i < KADRO.kisiler.length; i++) {
+    var x = KADRO.kisiler[i];
+    var adlar = [x.ad].concat(x.digerAdlar || []);
+    if (adlar.some(function (a) { return katla_(a).split(' ').sort().join(' ') === siralı; })) return x.ad;
+  }
+  var duz = function (w) { return w === w.toLocaleUpperCase('tr') ? w.charAt(0) + w.slice(1).toLocaleLowerCase('tr') : w; };
+  return t.slice(1).map(duz).concat([duz(t[0])]).join(' ');
+}
+
+function yokKayit_(x, ad, mevcut) {
+  var turAnahtar = katla_(x.tur);
+  var tur = x.s === 'MAKALE' ? 'Makale' : (YOK_TUR[turAnahtar] || (x.s === 'KİTAP' ? 'Kitap' : 'Tam Bildiri'));
+  var yazarlar = String(x.y || '').split(',').map(yokYazar_).filter(Boolean);
+  if (!yazarlar.length) yazarlar = [ad];
+  var dil = { 'turkce': 'Türkçe', 'ingilizce': 'İngilizce', 'almanca': 'Almanca' }[katla_(x.dil)] || (x.dil ? 'Diğer' : dilAdi_(null, x.b));
+  var sayfa = sayfaMetni_(x.ilk, x.son);
+  var buyukHarf = function (t) { return String(t || '').toLocaleLowerCase('tr').replace(/(^|\s)(\S)/g, function (m, a, b) { return a + b.toLocaleUpperCase('tr'); }); };
+  var g;
+  if (tur === 'Makale') {
+    g = yayimYeri_(x.yer, x.cilt, x.sayi, sayfa);
+  } else {
+    var tarih = x.bas ? (x.bit && x.bit !== x.bas ? x.bas + '–' + x.bit : x.bas) : '';
+    g = [x.yer, x.sehir, x.ulke ? buyukHarf(x.ulke) : '', tarih, sayfa ? 'ss. ' + sayfa : ''].filter(Boolean).join(', ') + '.';
+  }
+  var kendi = katla_(ad);
+  var ortak = yazarlar.filter(function (y) {
+    var k = katla_(y);
+    return k !== kendi && KADRO.kisiler.some(function (z) { return katla_(z.ad) === k; });
+  }).map(apaAd_);
+  var apa = apaKunye_({ yazarlar: yazarlar, yil: x.yil, baslik: x.b, tur: tur, kaynak: x.yer, cilt: x.cilt, sayi: x.sayi, sayfa: sayfa, doi: x.doi });
+  return {
+    kaynak: 'YÖK Akademik', baslik: x.b, doi: String(x.doi || '').toLowerCase(), yil: Number(x.yil),
+    mevcut: mevcutMu_(x.b, x.doi, mevcut, ad),
+    veri: {
+      B: tur, C: apa, D: dil, E: ad, F: String(x.kapsam) === '0' ? 'Ulusal' : 'Uluslararası',
+      G: g, H: x.s === 'MAKALE' ? (YOK_INDEKS[katla_(x.tur)] || 'Diğer') : '', J: ortak.join('; '), M: ''
+    }
   };
 }
 
