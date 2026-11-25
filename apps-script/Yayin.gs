@@ -25,29 +25,129 @@ var OA_ALANLAR = 'id,doi,title,publication_year,type,language,cited_by_count,bib
 function yayinlariGetir(ad, yil, orcid) {
   yil = Number(yil) || RAPOR.yil;
   var yazarlar = yazarBul_(ad, orcid);
-  if (!yazarlar.length) {
+  var orcidler = [];
+  yazarlar.forEach(function (a) { var o = orcidNo_(a.orcid); if (o && orcidler.indexOf(o) === -1) orcidler.push(o); });
+  var oParam = orcidNo_(orcid);
+  if (oParam && orcidler.indexOf(oParam) === -1) orcidler.push(oParam);
+  if (!yazarlar.length && !orcidler.length) {
     return { yazarlar: [], kayitlar: [], bulunamadi: true };
   }
   var idler = yazarlar.map(function (a) { return kisaId_(a.id); });
-  var r = oaGet_('/works', {
-    filter: 'author.id:' + idler.join('|') + ',publication_year:' + yil,
-    'per-page': 100, select: OA_ALANLAR, sort: 'publication_date:desc'
-  });
   var mevcut = mevcutYayinlar_();
-  var gorulen = {};
   var kayitlar = [];
-  r.results.forEach(function (w) {
-    if (ATLANACAK_TURLER.indexOf(w.type) !== -1) return;
-    var k = oaKayit_(w, ad, idler, mevcut);
-    var anahtar = k.doi || katla_(k.baslik);
-    if (gorulen[anahtar]) return;
-    gorulen[anahtar] = true;
+  var eklenmis = []; // tekilleştirme için imzalar
+  function ekle(k) {
+    var imza = { doi: String(k.doi || '').toLowerCase(), baslik: katla_(k.baslik), tum: katla_(k.baslik) };
+    if (eklenmis.some(function (e) { return yayinEsit_(imza, e); })) return false;
+    eklenmis.push(imza);
     kayitlar.push(k);
+    return true;
+  }
+
+  // 1) OpenAlex
+  var oaSayi = 0;
+  if (idler.length) {
+    var r = oaGet_('/works', {
+      filter: 'author.id:' + idler.join('|') + ',publication_year:' + yil,
+      'per-page': 100, select: OA_ALANLAR, sort: 'publication_date:desc'
+    });
+    r.results.forEach(function (w) {
+      if (ATLANACAK_TURLER.indexOf(w.type) !== -1) return;
+      if (ekle(oaKayit_(w, ad, idler, mevcut))) oaSayi++;
+    });
+  }
+
+  // 2) ORCID (hocanın kendi listesi: DOI'siz ulusal bildiriler, özet ve posterler dahil)
+  var orcidSayi = 0, orcidHata = '';
+  orcidler.forEach(function (o) {
+    try {
+      orcidKayitlari_(o, yil, ad, mevcut).forEach(function (k) { if (ekle(k)) orcidSayi++; });
+    } catch (e) { orcidHata = e.message; }
   });
+
   return {
     yazarlar: yazarlar.map(function (a) { return { id: kisaId_(a.id), ad: a.display_name, yayin: a.works_count }; }),
+    orcidler: orcidler,
+    kaynakSayilari: { openalex: oaSayi, orcid: orcidSayi },
+    orcidHata: orcidHata,
     kayitlar: kayitlar
   };
+}
+
+// ---------------------------------------------------------------------------
+// ORCID (pub.orcid.org açık API)
+// ---------------------------------------------------------------------------
+
+var ORCID_TUR = {
+  'journal-article': 'Makale', 'conference-paper': 'Tam Bildiri', 'conference-proceedings': 'Tam Bildiri', 'conference-output': 'Tam Bildiri',
+  'conference-abstract': 'Sözlü (Özet) Bildiri', 'conference-presentation': 'Sözlü (Özet) Bildiri', 'lecture-speech': 'Sözlü (Özet) Bildiri',
+  'conference-poster': 'Poster', 'book-chapter': 'Kitap Bölümü', 'book': 'Kitap', 'edited-book': 'Kitap'
+};
+
+function orcidNo_(o) {
+  var m = /(\d{4}-\d{4}-\d{4}-\d{3}[\dX])/i.exec(String(o || ''));
+  return m ? m[1].toUpperCase() : '';
+}
+
+function orcidGet_(yol) {
+  var y = null;
+  for (var i = 0; i < 3; i++) {
+    y = UrlFetchApp.fetch('https://pub.orcid.org/v3.0/' + yol, { headers: { Accept: 'application/json' }, muteHttpExceptions: true });
+    if (y.getResponseCode() === 200) return JSON.parse(y.getContentText());
+    if (y.getResponseCode() !== 429 && y.getResponseCode() < 500) break;
+    Utilities.sleep(1500 * (i + 1));
+  }
+  throw new Error('ORCID yanıt vermedi (kod ' + (y ? y.getResponseCode() : '?') + ').');
+}
+
+/** ORCID profilindeki yılın yayınlarını form kayıtlarına dönüştürür. */
+function orcidKayitlari_(orcid, yil, ad, mevcut) {
+  var ozet = orcidGet_(orcid + '/works');
+  var kodlar = [];
+  (ozet.group || []).forEach(function (g) {
+    var w = g['work-summary'][0];
+    var y = ((w['publication-date'] || {}).year || {}).value;
+    if (Number(y) === yil && ORCID_TUR[w.type]) kodlar.push(w['put-code']);
+  });
+  if (!kodlar.length) return [];
+  var detay = orcidGet_(orcid + '/works/' + kodlar.slice(0, 100).join(','));
+  var kendi = katla_(ad);
+  return (detay.bulk || []).map(function (b) { return b.work; }).filter(Boolean).map(function (w) {
+    var baslik = ((w.title || {}).title || {}).value || '';
+    var tur = ORCID_TUR[w.type] || 'Makale';
+    var etkinlik = (w['journal-title'] || {}).value || '';
+    var doi = '';
+    (((w['external-ids'] || {})['external-id']) || []).forEach(function (e) {
+      if (e['external-id-type'] === 'doi' && !doi) doi = String(e['external-id-value'] || '').replace(/^https?:\/\/doi\.org\//i, '').toLowerCase();
+    });
+    var bib = null;
+    if (w.citation && w.citation['citation-type'] === 'bibtex') {
+      try { bib = bibtexCoz_(w.citation['citation-value'])[0] || null; } catch (e) { bib = null; }
+    }
+    var yazarlar = (((w.contributors || {}).contributor) || []).map(function (c) { return ((c['credit-name'] || {}).value || '').trim(); }).filter(Boolean);
+    if (!yazarlar.length && bib && bib.author) yazarlar = bib.author.split(/\s+and\s+/i).filter(function (x) { return x && x.toLowerCase() !== 'others'; });
+    if (!yazarlar.length) yazarlar = [ad];
+    yazarlar = yazarlar.map(duzgunAd_);
+    var sayfa = bib && bib.pages ? bib.pages.replace(/-+/g, '–') : '';
+    var cilt = bib ? bib.volume : '', sayi = bib ? bib.number : '';
+    var dil = dilAdi_(w['language-code'], baslik + ' ' + etkinlik);
+    var ulusal = /ulusal|national/i.test(etkinlik) && !/uluslararas|international/i.test(etkinlik);
+    if (!ulusal && !/uluslararas|international|ieee|springer|world|european|global/i.test(etkinlik) && dil === 'Türkçe') ulusal = true;
+    // Bölüm kadrosundan diğer yazarlar (ORCID'de kurum bilgisi yok)
+    var ortak = yazarlar.filter(function (y) {
+      var k = katla_(y);
+      return k !== kendi && KADRO.kisiler.some(function (x) { return katla_(x.ad) === k; });
+    }).map(apaAd_);
+    var apa = apaKunye_({ yazarlar: yazarlar, yil: yil, baslik: baslik, tur: tur, kaynak: etkinlik, cilt: cilt, sayi: sayi, sayfa: sayfa,
+      yayinevi: bib ? bib.publisher : '', doi: doi });
+    return {
+      kaynak: 'ORCID', baslik: baslik, doi: doi, yil: yil, mevcut: mevcutMu_(baslik, doi, mevcut, ad),
+      veri: {
+        B: tur, C: apa, D: dil, E: ad, F: ulusal ? 'Ulusal' : 'Uluslararası',
+        G: yayimYeri_(etkinlik, cilt, sayi, sayfa), J: ortak.join('; '), M: ''
+      }
+    };
+  });
 }
 
 /**
@@ -109,7 +209,7 @@ function topluKaydet(anahtar, liste) {
 // Dönüştürme
 // ---------------------------------------------------------------------------
 
-var ATLANACAK_TURLER = ['paratext', 'erratum', 'dataset', 'peer-review', 'grant', 'supplementary-materials', 'libguides', 'retraction'];
+var ATLANACAK_TURLER = ['paratext', 'erratum', 'dataset', 'peer-review', 'grant', 'supplementary-materials', 'libguides', 'retraction', 'dissertation'];
 
 function oaKayit_(w, ad, benimIdler, mevcut) {
   var kaynak = (w.primary_location && w.primary_location.source) || {};
@@ -225,7 +325,7 @@ function apaAd_(tam) {
     var t = tam.split(/\s+/);
     soyad = t.pop(); adlar = t.join(' ');
   }
-  var bas = adlar.split(/\s+/).filter(Boolean).map(function (x) {
+  var bas = adlar.replace(/\./g, '. ').split(/\s+/).filter(Boolean).map(function (x) {
     return x.split('-').map(function (y) { return y.charAt(0).toLocaleUpperCase('tr') + '.'; }).join('-');
   }).join(' ');
   return soyad + (bas ? ', ' + bas : '');
